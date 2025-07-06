@@ -23,41 +23,7 @@ This is a machine learning prediction service project (PIC - Prediction and Mode
 - **`postgres.def`**: Singularity definition file for HPC deployment
 - **`DATABASE_SETUP.md`**: Comprehensive setup instructions for both environments
 
-## Development Commands
 
-### Database Operations
-
-**Docker Environment (Development):**
-```bash
-# Start database
-docker-compose -f db/docker-compose.yml up -d database
-
-# Stop database
-docker-compose -f db/docker-compose.yml down
-
-# Connect to database
-docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db
-
-# View logs
-docker-compose -f db/docker-compose.yml logs database
-```
-
-**Singularity Environment (HPC Production):**
-```bash
-# Build Singularity image
-sudo singularity build postgres.sif db/postgres.def
-
-# Run database
-singularity run --bind /path/to/postgres/data:/var/lib/postgresql/data postgres.sif
-```
-
-### Application Operations
-
-**Run the Python service:**
-```bash
-cd service
-python app.py
-```
 
 The service will start on port 8080 and serve a basic HTTP response.
 

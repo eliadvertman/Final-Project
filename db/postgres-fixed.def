@@ -6,18 +6,10 @@ From: postgres:15
     export POSTGRES_USER=pic_user
     export POSTGRES_PASSWORD=pic_password
 
-%files
-    # Optional: copy init scripts if they exist
-    # ./db/init /docker-entrypoint-initdb.d
-
 %post
     # Create necessary directories
     mkdir -p /var/lib/postgresql/data
     mkdir -p /docker-entrypoint-initdb.d
-
-    # Set up postgres user permissions
-    chown -R postgres:postgres /var/lib/postgresql
-    chmod 700 /var/lib/postgresql/data
 
 %runscript
     # Check if data directory is provided as bind mount
@@ -26,30 +18,34 @@ From: postgres:15
     else
         export PGDATA="/var/lib/postgresql/data"
     fi
-
+    
+    # Ensure proper ownership (works with --fakeroot)
+    chown -R postgres:postgres /var/lib/postgresql
+    chmod 700 "$PGDATA"
+    
     # Initialize database if not exists
     if [ ! -f "$PGDATA/PG_VERSION" ]; then
         echo "Initializing PostgreSQL database..."
-        su postgres -c "initdb -D $PGDATA"
-
+        runuser -u postgres -- initdb -D "$PGDATA"
+        
         # Start PostgreSQL temporarily to create user and database
-        su postgres -c "postgres -D $PGDATA" &
+        runuser -u postgres -- postgres -D "$PGDATA" &
         PG_PID=$!
         sleep 5
-
+        
         # Create database and user
-        su postgres -c "createdb $POSTGRES_DB" 2>/dev/null || true
-        su postgres -c "psql -c \"CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';\"" 2>/dev/null || true
-        su postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DB TO $POSTGRES_USER;\"" 2>/dev/null || true
-
+        runuser -u postgres -- createdb "$POSTGRES_DB" 2>/dev/null || true
+        runuser -u postgres -- psql -c "CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" 2>/dev/null || true
+        runuser -u postgres -- psql -c "GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DB TO $POSTGRES_USER;" 2>/dev/null || true
+        
         # Stop temporary PostgreSQL
         kill $PG_PID
         wait $PG_PID
     fi
-
+    
     # Start PostgreSQL
     echo "Starting PostgreSQL..."
-    exec su postgres -c "postgres -D $PGDATA"
+    exec runuser -u postgres -- postgres -D "$PGDATA"
 
 %labels
     Author PIC Project
