@@ -1,0 +1,57 @@
+Bootstrap: docker
+From: postgres:15
+
+%environment
+    export POSTGRES_DB=pic_db
+    export POSTGRES_USER=pic_user
+    export POSTGRES_PASSWORD=pic_password
+
+%files
+    # Optional: copy init scripts if they exist
+    # ./db/init /docker-entrypoint-initdb.d
+
+%post
+    # Create necessary directories
+    mkdir -p /var/lib/postgresql/data
+    mkdir -p /docker-entrypoint-initdb.d
+    
+    # Set up postgres user permissions
+    chown -R postgres:postgres /var/lib/postgresql
+    chmod 700 /var/lib/postgresql/data
+
+%runscript
+    # Check if data directory is provided as bind mount
+    if [ -n "$PGDATA" ]; then
+        export PGDATA="$PGDATA"
+    else
+        export PGDATA="/var/lib/postgresql/data"
+    fi
+    
+    # Initialize database if not exists
+    if [ ! -f "$PGDATA/PG_VERSION" ]; then
+        echo "Initializing PostgreSQL database..."
+        su postgres -c "initdb -D $PGDATA"
+        
+        # Start PostgreSQL temporarily to create user and database
+        su postgres -c "postgres -D $PGDATA" &
+        PG_PID=$!
+        sleep 5
+        
+        # Create database and user
+        su postgres -c "createdb $POSTGRES_DB" 2>/dev/null || true
+        su postgres -c "psql -c \"CREATE USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';\"" 2>/dev/null || true
+        su postgres -c "psql -c \"GRANT ALL PRIVILEGES ON DATABASE $POSTGRES_DB TO $POSTGRES_USER;\"" 2>/dev/null || true
+        
+        # Stop temporary PostgreSQL
+        kill $PG_PID
+        wait $PG_PID
+    fi
+    
+    # Start PostgreSQL
+    echo "Starting PostgreSQL..."
+    exec su postgres -c "postgres -D $PGDATA"
+
+%labels
+    Author PIC Project
+    Version 1.0
+    Description PostgreSQL database for PIC project
