@@ -81,9 +81,8 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 - No testing framework, linting, or build tools are currently configured
 
 
+# Workflow
 
-
-## Standard Workflow
 1. First think through the problem, read the codebase for relevant files, and write a plan to tasks/todo.md.
 2. The plan should have a list of todo items that you can check off as you complete them
 3. Before you begin working, check in with me and I will verify the plan.
@@ -93,4 +92,27 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 7. Finally, add a review section to the [todo.md](http://todo.md/) file with a summary of the changes you made and any other relevant information.
 
 
+## Python
+- source stroke_seg/bin/activate : use virtual env
+- pip install -r service/requirements.txt : install requirements
+- pytest tests :run tests 
 
+## Docker Commands
+
+**PostgreSQL Database:**
+- `docker-compose up -d database` : Start the postgres container
+- `docker-compose down` : Stop and remove containers
+- `docker-compose ps` : Check container status
+- `docker logs db-database-1` : View container logs
+- `docker exec db-database-1 psql -U pic_user -d pic_db -c "\dt"` : List database tables
+- `docker exec db-database-1 psql -U pic_user -d pic_db -c "\d [table_name]"` : Describe table structure
+- `DB_VOLUME_PATH=/tmp/postgres_data docker-compose up -d database` : Start with custom volume path (useful for permission issues)
+
+**Database Verification:**
+- Tables created: `models` and `inference`
+- Initialization script: `init/01_init_schema.sql` runs automatically on first startup
+- Database ready when logs show: "database system is ready to accept connections"
+
+## Code Best Practices
+
+- Always use descriptive variable names
