@@ -1,0 +1,5 @@
+peewee==3.17.7
+psycopg2-binary==2.9.9
+pytest==7.4.3
+python-dotenv==1.0.0
+testcontainers==4.8.2
