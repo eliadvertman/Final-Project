@@ -1,5 +1,36 @@
-# Final-Project
+# Stroke Segmentation
 
+A machine learning service for stroke image segmentation with PostgreSQL database persistence and automated testing infrastructure.
+
+## Project Structure
+
+```
+├── service/                    # Python ML service
+│   ├── main/                  # Main application package
+│   │   ├── controller/        # API specification
+│   │   └── dao/              # Data access layer (Peewee ORM)
+│   ├── test/                 # Test suite with testcontainers
+│   └── requirements.txt      # Python dependencies
+├── db/                       # Database configuration
+│   ├── docker-compose.yml    # Docker setup
+│   ├── postgres.def          # Singularity definition
+│   └── init/                 # Database initialization scripts
+└── stroke_seg/               # Virtual environment
+```
+
+## Quick Start
+
+**Setup and test:**
+```bash
+# Activate virtual environment
+source stroke_seg/bin/activate
+
+# Install dependencies
+pip install -r service/requirements.txt
+
+# Run tests (automatic container management)
+pytest service/test/ -v
+```
 
 ## Development Commands
 
@@ -35,10 +66,22 @@ singularity run --bind /path/to/postgres/data:/var/lib/postgresql/data postgres.
 singularity run --bind /custom/data/path:/var/lib/postgresql/data postgres.sif
 ```
 
-### Application Operations
+### Testing
 
-**Run the Python service:**
+**Automated testing (recommended):**
 ```bash
-cd service
-python app.py
+# Tests automatically start/stop PostgreSQL containers
+pytest service/test/ -v
+
+# Run specific test
+pytest service/test/test_integration.py::TestDatabaseIntegration::test_model_dao_crud_integration -v
+```
+
+**Manual testing with existing database:**
+```bash
+# Start database first
+docker-compose -f db/docker-compose.yml up -d database
+
+# Run tests against existing database
+pytest service/test/ -v
 ```

@@ -12,10 +12,17 @@ This is a machine learning prediction service project (PIC - Prediction and Mode
 ## Architecture
 
 ### Service Layer (`service/`)
-- **`app.py`**: Main application entry point - currently a basic HTTP server on port 8080
-- **`controller/swagger.yaml`**: OpenAPI specification defining the ML prediction API with endpoints for model training, prediction, and status management
-- **`bl/`**: Business logic layer (currently empty - needs implementation)
-- **`dao/`**: Data access object layer (currently empty - needs implementation)
+- **`main/`**: Main application package containing core functionality
+  - **`controller/swagger.yaml`**: OpenAPI specification defining the ML prediction API
+  - **`dao/`**: Data access object layer with complete CRUD operations
+    - **`database.py`**: Database connection and configuration
+    - **`models.py`**: Peewee ORM model definitions (ModelRecord, InferenceRecord)
+    - **`model_dao.py`**: Model data access operations
+    - **`inference_dao.py`**: Inference data access operations
+- **`test/`**: Comprehensive test suite with automated container management
+  - **`conftest.py`**: Test configuration with testcontainers support
+  - **`test_integration.py`**: Integration tests for database operations
+- **`requirements.txt`**: Python dependencies including testcontainers
 
 ### Database Layer (`db/`)
 - **PostgreSQL database**: Configured for both Docker (development) and Singularity (HPC production) environments
@@ -25,7 +32,7 @@ This is a machine learning prediction service project (PIC - Prediction and Mode
 
 
 
-The service will start on port 8080 and serve a basic HTTP response.
+Database connection uses environment variables for configuration with Peewee ORM for data persistence.
 
 ## Database Configuration
 
@@ -35,7 +42,14 @@ The service will start on port 8080 and serve a basic HTTP response.
 - Password: `pic_password`
 - Port: `5432`
 
-**Environment variables for customization:**
+**Environment variables for application:**
+- `DB_NAME`: Database name (default: pic_db)
+- `DB_HOST`: Database host (default: localhost)
+- `DB_PORT`: Database port (default: 5432)
+- `DB_USER`: Database user (default: pic_user)
+- `DB_PASSWORD`: Database password (default: pic_password)
+
+**Docker environment variables:**
 - `POSTGRES_DB`: Database name
 - `POSTGRES_USER`: Database user
 - `POSTGRES_PASSWORD`: Database password
@@ -59,26 +73,29 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 
 ## Implementation Status
 
-**Current State:**
-- Basic HTTP server is implemented
-- Database infrastructure is configured
+**Implemented:**
+- Complete database layer with Peewee ORM
+- Data access objects for models and inference
+- Database schema with models and inference tables
+- Comprehensive test suite with testcontainers
+- Automated database container management for tests
+- Database connection management and configuration
 - API specification is defined
 - Both Docker and Singularity deployment configurations are ready
 
 **Missing Implementation:**
-- Business logic layer (`bl/` directory is empty)
-- Data access layer (`dao/` directory is empty)
-- API endpoint implementations
-- Database schema and migrations
+- Business logic layer
+- API endpoint implementations (web server/controllers)
 - Model training and prediction logic
-- Connection between service and database
+- Web service integration with database layer
 
 ## Development Notes
 
-- The project appears to be in early development stage with infrastructure set up but core functionality not yet implemented
-- The current `app.py` serves as a placeholder - the actual ML service needs to be built according to the OpenAPI specification
+- Database layer is fully implemented with complete CRUD operations
+- Test infrastructure supports both isolated testcontainers and manual database setup
 - Database setup is well-documented and production-ready for HPC environments using Singularity
-- No testing framework, linting, or build tools are currently configured
+- Tests automatically manage PostgreSQL containers with proper cleanup
+- Container reuse is enabled for improved test performance
 
 
 # Workflow
@@ -93,9 +110,10 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 
 
 ## Python
-- source stroke_seg/bin/activate : use virtual env
-- pip install -r service/requirements.txt : install requirements
-- pytest tests :run tests 
+- `source stroke_seg/bin/activate` : Activate virtual environment
+- `pip install -r service/requirements.txt` : Install requirements (includes testcontainers)
+- `pytest service/test/` : Run integration tests with automatic container management
+- `pytest service/test/ -v` : Run tests with verbose output 
 
 ## Docker Commands
 
