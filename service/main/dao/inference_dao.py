@@ -1,57 +1,47 @@
 from typing import List, Optional
 from peewee import DoesNotExist
 from .models import InferenceRecord, ModelRecord
-from .database import connect_db
+import uuid
 
 class InferenceDAO:
     """Data Access Object for InferenceRecord operations."""
     
     def __init__(self):
-        """Initialize DAO and ensure database connection."""
-        connect_db()
+        """Initialize DAO."""
+        pass
     
-    def create(self, status: str, model_id: Optional[int] = None, batch_id: Optional[str] = None,
-               input_path: Optional[str] = None, output_path: Optional[str] = None) -> InferenceRecord:
+    def create(self, inference_record: InferenceRecord) -> InferenceRecord:
         """Create a new inference record."""
-        inference = InferenceRecord.create(
-            model_id=model_id,
-            batch_id=batch_id,
-            input_path=input_path,
-            output_path=output_path,
-            status=status
-        )
-        return inference
+        inference_record.save()
+        return inference_record
     
-    def get_by_id(self, inference_id: int) -> Optional[InferenceRecord]:
-        """Get an inference by ID."""
+    
+    def get_by_predict_id(self, predict_uuid: uuid.UUID) -> Optional[InferenceRecord]:
+        """Get an inference by predict_id UUID."""
         try:
-            return InferenceRecord.get_by_id(inference_id)
+            return InferenceRecord.get(InferenceRecord.predict_id == str(predict_uuid))
         except DoesNotExist:
             return None
     
-    def get_all(self, limit: Optional[int] = None, offset: int = 0) -> List[InferenceRecord]:
+    def list_all(self, limit: Optional[int] = None, offset: int = 0) -> List[InferenceRecord]:
         """Get all inferences with optional pagination."""
-        query = InferenceRecord.select().offset(offset)
+        query = InferenceRecord.select().order_by(InferenceRecord.created_at.desc()).offset(offset)
         if limit:
             query = query.limit(limit)
         return list(query)
     
-    def get_by_model_id(self, model_id: int) -> List[InferenceRecord]:
+    def get_by_model_id(self, model_uuid: uuid.UUID) -> List[InferenceRecord]:
         """Get all inferences for a specific model."""
-        return list(InferenceRecord.select().where(InferenceRecord.model_id == model_id))
+        return list(InferenceRecord.select().where(InferenceRecord.model_id == str(model_uuid)))
     
     def get_by_status(self, status: str) -> List[InferenceRecord]:
         """Get all inferences with a specific status."""
         return list(InferenceRecord.select().where(InferenceRecord.status == status))
     
-    def get_by_batch_id(self, batch_id: str) -> List[InferenceRecord]:
-        """Get all inferences with a specific batch ID."""
-        return list(InferenceRecord.select().where(InferenceRecord.batch_id == batch_id))
-    
-    def update(self, inference_id: int, **kwargs) -> Optional[InferenceRecord]:
+    def update(self, predict_uuid: uuid.UUID, **kwargs) -> Optional[InferenceRecord]:
         """Update an inference record."""
         try:
-            inference = InferenceRecord.get_by_id(inference_id)
+            inference = InferenceRecord.get(InferenceRecord.predict_id == str(predict_uuid))
             for key, value in kwargs.items():
                 setattr(inference, key, value)
             inference.save()
@@ -59,10 +49,10 @@ class InferenceDAO:
         except DoesNotExist:
             return None
     
-    def delete(self, inference_id: int) -> bool:
+    def delete(self, predict_uuid: uuid.UUID) -> bool:
         """Delete an inference record."""
         try:
-            inference = InferenceRecord.get_by_id(inference_id)
+            inference = InferenceRecord.get(InferenceRecord.predict_id == str(predict_uuid))
             inference.delete_instance()
             return True
         except DoesNotExist:
@@ -72,6 +62,6 @@ class InferenceDAO:
         """Get total count of inferences."""
         return InferenceRecord.select().count()
     
-    def count_by_model(self, model_id: int) -> int:
+    def count_by_model(self, model_uuid: uuid.UUID) -> int:
         """Get count of inferences for a specific model."""
-        return InferenceRecord.select().where(InferenceRecord.model_id == model_id).count()
+        return InferenceRecord.select().where(InferenceRecord.model_id == str(model_uuid)).count()

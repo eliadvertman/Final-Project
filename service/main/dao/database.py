@@ -1,5 +1,6 @@
 import os
-from peewee import PostgresqlDatabase, Model
+from peewee import Model
+from playhouse.pool import PooledPostgresqlDatabase
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,16 +13,22 @@ def get_database_config():
         'database': os.getenv('DB_NAME', 'pic_db'),
         'user': os.getenv('DB_USER', 'pic_user'),
         'password': os.getenv('DB_PASSWORD', 'pic_password'),
+        'max_connections': int(os.getenv('DB_MAX_CONNECTIONS', 5)),
+        'stale_timeout': int(os.getenv('DB_STALE_TIMEOUT', 300)),
+        'timeout': int(os.getenv('DB_CONNECTION_TIMEOUT', 30)),
     }
 
 db_config = get_database_config()
 
-database = PostgresqlDatabase(
+database = PooledPostgresqlDatabase(
     db_config['database'],
     user=db_config['user'],
     password=db_config['password'],
     host=db_config['host'],
-    port=db_config['port']
+    port=db_config['port'],
+    max_connections=db_config['max_connections'],
+    stale_timeout=db_config['stale_timeout'],
+    timeout=db_config['timeout']
 )
 
 class BaseModel(Model):
@@ -29,13 +36,21 @@ class BaseModel(Model):
     class Meta:
         database = database
 
-def connect_db():
-    """Connect to the database."""
-    if database.is_closed():
-        database.connect()
-    return database
+def get_pool_status():
+    """Get connection pool status for monitoring."""
+    try:
+        return {
+            'max_connections': database._max_connections,
+            'active_connections': len(database._in_use),
+            'available_connections': len(database._connections),
+            'is_closed': database.is_closed()
+        }
+    except AttributeError:
+        return {'status': 'Pool information not available'}
 
-def close_db():
-    """Close the database connection."""
-    if not database.is_closed():
+def close_pool():
+    """Close all connections in the pool. Use only for application shutdown."""
+    if hasattr(database, 'close_all'):
+        database.close_all()
+    elif not database.is_closed():
         database.close()

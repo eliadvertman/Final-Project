@@ -1,15 +1,21 @@
 from peewee import *
+from playhouse.postgres_ext import JSONField
 from datetime import datetime
+import uuid
 from .database import BaseModel
 
 class ModelRecord(BaseModel):
     """ORM model for the models table."""
-    id = AutoField(primary_key=True)
+    model_id = CharField(primary_key=True, max_length=36, default=lambda: str(uuid.uuid4()))
     name = CharField(max_length=255, null=False)
-    batch_id = CharField(max_length=255, null=True)
-    input_path = CharField(max_length=500, null=True)
-    output_path = CharField(max_length=500, null=True)
-    status = CharField(max_length=20, null=False, constraints=[Check("status IN ('TRAINING', 'SERVING', 'DELETED', 'INVALID')")])
+    images_path = CharField(max_length=500, null=True)
+    labels_path = CharField(max_length=500, null=True)
+    dataset_path = CharField(max_length=500, null=True)
+    status = CharField(max_length=20, null=False, constraints=[Check("status IN ('PENDING', 'TRAINING', 'TRAINED', 'FAILED', 'DEPLOYED')")])
+    progress = FloatField(default=0.0)
+    start_time = DateTimeField(null=True)
+    end_time = DateTimeField(null=True)
+    error_message = TextField(null=True)
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
     
@@ -23,12 +29,14 @@ class ModelRecord(BaseModel):
 
 class InferenceRecord(BaseModel):
     """ORM model for the inference table."""
-    id = AutoField(primary_key=True)
-    model_id = ForeignKeyField(ModelRecord, backref='inferences', null=True)
-    batch_id = CharField(max_length=255, null=True)
-    input_path = CharField(max_length=500, null=True)
-    output_path = CharField(max_length=500, null=True)
-    status = CharField(max_length=20, null=False, constraints=[Check("status IN ('COMPLETED', 'RUNNING', 'FAILED')")])
+    predict_id = CharField(primary_key=True, max_length=36, default=lambda: str(uuid.uuid4()))
+    model_id = ForeignKeyField(ModelRecord, field='model_id', backref='inferences', null=False)
+    input_data = JSONField(null=False)
+    prediction = JSONField(null=True)
+    status = CharField(max_length=20, null=False, constraints=[Check("status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')")])
+    start_time = DateTimeField(null=True)
+    end_time = DateTimeField(null=True)
+    error_message = TextField(null=True)
     created_at = DateTimeField(default=datetime.now)
     updated_at = DateTimeField(default=datetime.now)
     

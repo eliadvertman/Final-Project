@@ -49,6 +49,11 @@ Database connection uses environment variables for configuration with Peewee ORM
 - `DB_USER`: Database user (default: pic_user)
 - `DB_PASSWORD`: Database password (default: pic_password)
 
+**Connection Pool Configuration:**
+- `DB_MAX_CONNECTIONS`: Maximum connections in pool (default: 5)
+- `DB_STALE_TIMEOUT`: Close idle connections after X seconds (default: 300)
+- `DB_CONNECTION_TIMEOUT`: Connection timeout in seconds (default: 30)
+
 **Docker environment variables:**
 - `POSTGRES_DB`: Database name
 - `POSTGRES_USER`: Database user
@@ -74,12 +79,12 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 ## Implementation Status
 
 **Implemented:**
-- Complete database layer with Peewee ORM
+- Complete database layer with Peewee ORM and connection pooling
 - Data access objects for models and inference
 - Database schema with models and inference tables
 - Comprehensive test suite with testcontainers
 - Automated database container management for tests
-- Database connection management and configuration
+- Connection pooling for improved performance and scalability
 - API specification is defined
 - Both Docker and Singularity deployment configurations are ready
 
@@ -92,10 +97,12 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 ## Development Notes
 
 - Database layer is fully implemented with complete CRUD operations
+- Connection pooling implemented for improved performance and scalability
 - Test infrastructure supports both isolated testcontainers and manual database setup
 - Database setup is well-documented and production-ready for HPC environments using Singularity
 - Tests automatically manage PostgreSQL containers with proper cleanup
 - Container reuse is enabled for improved test performance
+- Health check endpoint available at `/health/db` for monitoring connection pool status
 
 
 # Workflow
@@ -106,7 +113,8 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 4. Then, begin working on the todo items, marking them as complete as you go.
 5. Every step of the way just give me a high level explanation of what changes you made
 6. Make every task and code change you do as simple as possible. We want to avoid making any massive or complex changes. Every change should impact as little code as possible. Everything is about simplicity.
-7. Finally, add a review section to the [todo.md](http://todo.md/) file with a summary of the changes you made and any other relevant information.
+7. Make sure to not create large Python files. Follow SOLID principles to break big components to smaller ones.
+8. Finally, add a review section to the [todo.md](http://todo.md/) file with a summary of the changes you made and any other relevant information.
 
 
 ## Python

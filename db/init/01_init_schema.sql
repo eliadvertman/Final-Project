@@ -3,24 +3,30 @@
 
 -- Create Models table
 CREATE TABLE IF NOT EXISTS models (
-    id SERIAL PRIMARY KEY,
+    model_id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    batch_id VARCHAR(255),
-    input_path VARCHAR(500),
-    output_path VARCHAR(500),
-    status VARCHAR(20) NOT NULL CHECK (status IN ('TRAINING', 'SERVING', 'DELETED', 'INVALID')),
+    images_path VARCHAR(500),
+    labels_path VARCHAR(500),
+    dataset_path VARCHAR(500),
+    status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'TRAINING', 'TRAINED', 'FAILED', 'DEPLOYED')),
+    progress REAL DEFAULT 0.0,
+    start_time TIMESTAMP WITH TIME ZONE,
+    end_time TIMESTAMP WITH TIME ZONE,
+    error_message TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create Inference table
 CREATE TABLE IF NOT EXISTS inference (
-    id SERIAL PRIMARY KEY,
-    model_id INTEGER REFERENCES models(id),
-    batch_id VARCHAR(255),
-    input_path VARCHAR(500),
-    output_path VARCHAR(500),
-    status VARCHAR(20) NOT NULL CHECK (status IN ('COMPLETED', 'RUNNING', 'FAILED')),
+    predict_id VARCHAR(36) PRIMARY KEY,
+    model_id VARCHAR(36) NOT NULL REFERENCES models(model_id),
+    input_data JSONB NOT NULL,
+    prediction JSONB,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')),
+    start_time TIMESTAMP WITH TIME ZONE,
+    end_time TIMESTAMP WITH TIME ZONE,
+    error_message TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
