@@ -5,6 +5,7 @@ from functools import wraps
 from flask import jsonify, request
 
 from .exceptions import ServiceException, InvalidJSONException
+from .logging_config import get_logger
 
 
 def handle_errors(func):
@@ -25,6 +26,8 @@ def handle_errors(func):
             # JSON validation happens automatically
             pass
     """
+    logger = get_logger(__name__)
+    
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
@@ -41,6 +44,10 @@ def handle_errors(func):
             
         except ServiceException as e:
             # Handle custom service exceptions with proper status codes
+            logger.warning(
+                f"Service exception in {func.__name__}: {e.message}",
+                extra={'status_code': e.status_code, 'exception_type': type(e).__name__}
+            )
             return jsonify({
                 "code": e.status_code, 
                 "message": e.message
@@ -48,8 +55,11 @@ def handle_errors(func):
             
         except Exception as e:
             # Handle unexpected exceptions with logging
-            print(f"Error in {func.__name__}: {str(e)}")
-            traceback.print_exc()
+            logger.error(
+                f"Unexpected error in {func.__name__}: {str(e)}",
+                extra={'exception_type': type(e).__name__},
+                exc_info=True
+            )
             return jsonify({
                 "code": 500, 
                 "message": "Internal server error"

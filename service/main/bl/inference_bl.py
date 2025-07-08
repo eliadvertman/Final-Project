@@ -15,6 +15,7 @@ from ..exceptions import (
     InvalidPaginationException,
     DatabaseException
 )
+from ..logging_config import get_logger
 
 
 class InferenceBL:

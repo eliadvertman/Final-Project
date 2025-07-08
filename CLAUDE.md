@@ -13,6 +13,7 @@ This is a machine learning prediction service project (PIC - Prediction and Mode
 
 ### Service Layer (`service/`)
 - **`main/`**: Main application package containing core functionality
+  - **`logging_config.py`**: Centralized logging configuration with structured logging
   - **`controller/swagger.yaml`**: OpenAPI specification defining the ML prediction API
   - **`dao/`**: Data access object layer with complete CRUD operations
     - **`database.py`**: Database connection and configuration
@@ -48,6 +49,11 @@ Database connection uses environment variables for configuration with Peewee ORM
 - `DB_PORT`: Database port (default: 5432)
 - `DB_USER`: Database user (default: pic_user)
 - `DB_PASSWORD`: Database password (default: pic_password)
+
+**Logging Configuration:**
+- `LOG_LEVEL`: Logging level (default: INFO) - DEBUG, INFO, WARNING, ERROR
+- `LOG_FORMAT`: Log format (default: standard) - standard or json
+- `LOG_FILE`: Optional log file path for file output with rotation
 
 **Connection Pool Configuration:**
 - `DB_MAX_CONNECTIONS`: Maximum connections in pool (default: 5)
@@ -89,6 +95,7 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 - Complete API endpoint implementations (Flask controllers)
 - Centralized error handling with smart decorators
 - Custom exception hierarchy for proper error responses
+- **Comprehensive logging infrastructure with structured logging across all layers**
 - API specification is defined
 - Both Docker and Singularity deployment configurations are ready
 
@@ -128,6 +135,15 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 - Created smart `@handle_errors` decorator with auto JSON validation
 - Reduced ~150+ lines of repetitive error handling code
 - Centralized error response format and logging
+
+### Comprehensive Logging Infrastructure
+- **Centralized logging configuration** with structured logging across all application layers
+- **Request correlation IDs** for tracing requests through the entire system
+- **Performance monitoring** with request timing and database operation metrics
+- **Environment-based configuration** supporting both development and production
+- **JSON and standard formatting** options for different deployment environments
+- **Zero print statements** - all replaced with appropriate logging levels
+- **File and console handlers** with rotation and proper log levels
 
 
 # Workflow

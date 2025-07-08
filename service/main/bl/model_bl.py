@@ -15,6 +15,7 @@ from ..exceptions import (
     DatabaseConnectionException,
     MissingRequiredFieldException
 )
+from ..logging_config import get_logger
 
 
 class ModelBL:
@@ -23,6 +24,7 @@ class ModelBL:
     def __init__(self):
         """Initialize the business logic layer with DAO."""
         self.model_dao = ModelDAO()
+        self.logger = get_logger(__name__)
     
     def train_model(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -38,9 +40,12 @@ class ModelBL:
             ModelCreationException: If model creation fails due to server error
             DatabaseConnectionException: If database connection fails
         """
+        model_name = data.get('modelName', 'Unnamed Model')
+        self.logger.info(f"Starting model training - Name: {model_name}")
+        
         try:
             model_record = ModelRecord(
-                name=data.get('modelName', 'Unnamed Model'),
+                name=model_name,
                 images_path=data.get('imagesPath'),
                 labels_path=data.get('labelsPath'),
                 dataset_path=data.get('datasetPath'),
@@ -51,6 +56,11 @@ class ModelBL:
             
             self.model_dao.create(model_record)
             
+            self.logger.info(
+                f"Model training record created - ID: {model_record.model_id}, Name: {model_name}",
+                extra={'model_id': str(model_record.model_id)}
+            )
+            
             return {
                 "message": "Model training started.",
                 "modelId": str(model_record.model_id)
@@ -58,6 +68,7 @@ class ModelBL:
             
         except Exception as e:
             error_msg = str(e).lower()
+            self.logger.error(f"Model training failed - Name: {model_name}, Error: {str(e)}")
             if "connection" in error_msg or "connect" in error_msg:
                 raise DatabaseConnectionException(f"Database connection failed: {str(e)}")
             else:
@@ -77,15 +88,24 @@ class ModelBL:
             InvalidUUIDException: If model ID format is invalid
             ModelNotFoundException: If model is not found
         """
+        self.logger.debug(f"Getting model status - ID: {model_id}")
+        
         try:
             model_uuid = uuid.UUID(model_id)
         except (ValueError, TypeError):
+            self.logger.warning(f"Invalid UUID format for model ID: {model_id}")
             raise InvalidUUIDException("model ID")
         
         model_record = self.model_dao.get_by_model_id(model_uuid)
         
         if not model_record:
+            self.logger.warning(f"Model not found - ID: {model_id}")
             raise ModelNotFoundException(model_id)
+        
+        self.logger.debug(
+            f"Model status retrieved - ID: {model_id}, Status: {model_record.status}, Progress: {model_record.progress}%",
+            extra={'model_id': model_id}
+        )
         
         response = {
             "modelId": str(model_record.model_id),
@@ -118,9 +138,13 @@ class ModelBL:
             DatabaseException: If database operation fails
             DatabaseConnectionException: If database connection fails
         """
+        self.logger.debug(f"Listing models - Limit: {limit}, Offset: {offset}")
+        
         if limit < 0:
+            self.logger.warning(f"Invalid limit parameter: {limit}")
             raise InvalidPaginationException("Limit")
         if offset < 0:
+            self.logger.warning(f"Invalid offset parameter: {offset}")
             raise InvalidPaginationException("Offset")
         
         try:
@@ -135,10 +159,12 @@ class ModelBL:
                     "createdAt": model.created_at.isoformat() + 'Z'
                 })
             
+            self.logger.info(f"Models listed successfully - Count: {len(response)}, Limit: {limit}, Offset: {offset}")
             return response
             
         except Exception as e:
             error_msg = str(e).lower()
+            self.logger.error(f"Failed to list models - Error: {str(e)}")
             if "connection" in error_msg or "connect" in error_msg:
                 raise DatabaseConnectionException(f"Database connection failed: {str(e)}")
             else:
