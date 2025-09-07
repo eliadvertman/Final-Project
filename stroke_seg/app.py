@@ -1,10 +1,11 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
 import time
 
-from .dao.database import database as db, get_pool_status
-from .controller import model_bp, prediction_bp
-from .logging_config import setup_logging, get_logger, add_request_id_to_request, log_request_info
+from flask import Flask, jsonify
+from flask_cors import CORS
+
+from stroke_seg.controller import model_bp, prediction_bp
+from stroke_seg.dao.database import get_pool_status
+from stroke_seg.logging_config import setup_logging, get_logger, add_request_id_to_request, log_request_info
 
 app = Flask(__name__)
 CORS(app)

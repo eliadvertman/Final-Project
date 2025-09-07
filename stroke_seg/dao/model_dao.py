@@ -1,6 +1,6 @@
 from typing import List, Optional
 from peewee import DoesNotExist
-from .models import ModelRecord
+from stroke_seg.dao.models import ModelRecord
 import uuid
 
 class ModelDAO:

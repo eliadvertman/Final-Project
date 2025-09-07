@@ -2,9 +2,9 @@
 
 from flask import Blueprint, request, jsonify
 
-from ..bl.model_bl import ModelBL
-from ..error_handler import handle_errors
-from ..logging_config import get_logger
+from stroke_seg.bl.model_bl import ModelBL
+from stroke_seg.error_handler import handle_errors
+from stroke_seg.logging_config import get_logger
 
 
 model_bp = Blueprint('model', __name__, url_prefix='/api/v1/model')

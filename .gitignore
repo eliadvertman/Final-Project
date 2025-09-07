@@ -183,5 +183,4 @@ datasets/
 
 # Project specific
 tasks/
-stroke_seg/
 pyvenv.cfg

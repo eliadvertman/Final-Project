@@ -2,12 +2,12 @@
 
 import uuid
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
-from ..dao.inference_dao import InferenceDAO
-from ..dao.model_dao import ModelDAO
-from ..dao.models import InferenceRecord
-from ..exceptions import (
+from stroke_seg.dao.inference_dao import InferenceDAO
+from stroke_seg.dao.model_dao import ModelDAO
+from stroke_seg.dao.models import InferenceRecord
+from stroke_seg.exceptions import (
     ModelNotFoundException,
     PredictionNotFoundException,
     InvalidUUIDException,
@@ -15,7 +15,6 @@ from ..exceptions import (
     InvalidPaginationException,
     DatabaseException
 )
-from ..logging_config import get_logger
 
 
 class InferenceBL:

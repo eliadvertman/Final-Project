@@ -1,7 +1,10 @@
-from typing import List, Optional
-from peewee import DoesNotExist
-from .models import InferenceRecord, ModelRecord
 import uuid
+from typing import List, Optional
+
+from peewee import DoesNotExist
+
+from stroke_seg.dao.models import InferenceRecord
+
 
 class InferenceDAO:
     """Data Access Object for InferenceRecord operations."""

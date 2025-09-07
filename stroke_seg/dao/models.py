@@ -2,7 +2,7 @@ from peewee import *
 from playhouse.postgres_ext import JSONField
 from datetime import datetime
 import uuid
-from .database import BaseModel
+from stroke_seg.dao.database import BaseModel
 
 class ModelRecord(BaseModel):
     """ORM model for the models table."""

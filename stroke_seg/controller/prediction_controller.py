@@ -2,9 +2,9 @@
 
 from flask import Blueprint, request, jsonify
 
-from ..bl.inference_bl import InferenceBL
-from ..error_handler import handle_errors
-from ..logging_config import get_logger
+from stroke_seg.bl.inference_bl import InferenceBL
+from stroke_seg.error_handler import handle_errors
+from stroke_seg.logging_config import get_logger
 
 
 prediction_bp = Blueprint('prediction', __name__, url_prefix='/api/v1/predict')
