@@ -1,0 +1,385 @@
+swagger: '2.0'
+info:
+  title: Prediction and Model Management API
+  description: API for managing machine learning models and making predictions.
+  version: 1.0.0
+host: localhost:8080 # Replace with your actual host and port
+basePath: /api/v1 # Replace with your desired base path
+
+tags:
+  - name: Model Management
+    description: Operations related to training, status, and listing of machine learning models.
+  - name: Prediction
+    description: Operations related to making predictions and managing prediction requests.
+
+schemes:
+  - http
+
+paths:
+  /model/train:
+    post:
+      tags:
+        - Model Management
+      summary: Initiates the training of a new machine learning model.
+      description: This endpoint triggers the training process for a new model based on the provided configuration.
+      operationId: trainModel
+      parameters:
+        - name: trainingConfig
+          in: body
+          description: Configuration for model training.
+          required: true
+          schema:
+            $ref: '#/definitions/TrainingConfig'
+      responses:
+        202:
+          description: Model training initiated successfully. # This would be line ~36 depending on exact formatting
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Model training started.
+              modelId:
+                type: string
+                format: uuid
+                example: d290f1ee-6c54-4b01-90e6-d701748f0851
+        400:
+          description: Invalid training configuration provided.
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /model/{modelId}/status:
+    get:
+      tags:
+        - Model Management
+      summary: Retrieves the training status of a specific model.
+      description: This endpoint provides information about the current status of a model's training process.
+      operationId: getModelStatus
+      parameters:
+        - name: modelId
+          in: path
+          description: ID of the model to retrieve status for.
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: Model status retrieved successfully.
+          schema:
+            $ref: '#/definitions/ModelStatus'
+        404:
+          description: Model not found.
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /model/list:
+    get:
+      tags:
+        - Model Management
+      summary: Lists all available trained models.
+      description: This endpoint returns a list of all models that have been trained and are available.
+      operationId: listModels
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of models to return.
+          required: false
+          type: integer
+          format: int32
+          default: 10
+        - name: offset
+          in: query
+          description: Offset for pagination.
+          required: false
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        200:
+          description: A list of trained models.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ModelSummary'
+        500:
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /predict/predict:
+    post:
+      tags:
+        - Prediction
+      summary: Makes a prediction using a specified model.
+      description: This endpoint allows you to send input data and receive predictions from a deployed model.
+      operationId: makePrediction
+      parameters:
+        - name: predictionRequest
+          in: body
+          description: Data for prediction and model ID.
+          required: true
+          schema:
+            $ref: '#/definitions/PredictionRequest'
+      responses:
+        200:
+          description: Prediction successful.
+          schema:
+            $ref: '#/definitions/PredictionResponse'
+        400:
+          description: Invalid prediction request or data.
+          schema:
+            $ref: '#/definitions/Error'
+        404:
+          description: Model not found.
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /predict/{predictId}/status:
+    get:
+      tags:
+        - Prediction
+      summary: Retrieves the status of a specific prediction request.
+      description: This endpoint provides information about the current status of a prediction request.
+      operationId: getPredictStatus
+      parameters:
+        - name: predictId
+          in: path
+          description: ID of the prediction request to retrieve status for.
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: Prediction status retrieved successfully.
+          schema:
+            $ref: '#/definitions/PredictionStatus'
+        404:
+          description: Prediction not found.
+          schema:
+            $ref: '#/definitions/Error'
+        500:
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/Error'
+
+  /predict/list:
+    get:
+      tags:
+        - Prediction
+      summary: Lists all prediction requests.
+      description: This endpoint returns a list of all prediction requests that have been made.
+      operationId: listPredicts
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of predictions to return.
+          required: false
+          type: integer
+          format: int32
+          default: 10
+        - name: offset
+          in: query
+          description: Offset for pagination.
+          required: false
+          type: integer
+          format: int32
+          default: 0
+      responses:
+        200:
+          description: A list of prediction requests.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/PredictionSummary'
+        500:
+          description: Internal server error.
+          schema:
+            $ref: '#/definitions/Error'
+
+definitions:
+  TrainingConfig:
+    type: object
+    required:
+      - modelName
+      - datasetId
+      - algorithm
+    properties:
+      modelName:
+        type: string
+        description: A unique name for the new model.
+        example: CustomerChurnPredictor
+      imagesPath:
+        type: string
+        format: path
+        description: raw data  path
+        example: /work/images
+      labelsPath:
+        type: string
+        description: raw data  path
+        example: /work/labels
+      datasetPath:
+        type: string
+        description: dataset path
+        example: /work/
+
+  ModelStatus:
+    type: object
+    properties:
+      modelId:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      status:
+        type: string
+        enum: [PENDING, TRAINING, TRAINED, FAILED, DEPLOYED]
+        example: TRAINED
+      progress:
+        type: number
+        format: float
+        description: Training progress percentage (0-100).
+        example: 100.0
+      startTime:
+        type: string
+        format: date-time
+        example: '2023-10-27T10:00:00Z'
+      endTime:
+        type: string
+        format: date-time
+        example: '2023-10-27T10:30:00Z'
+      errorMessage:
+        type: string
+        description: Error message if training failed.
+        example: Dataset not found.
+
+  ModelSummary:
+    type: object
+    properties:
+      modelId:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      modelName:
+        type: string
+        example: CustomerChurnPredictor
+      status:
+        type: string
+        enum: [PENDING, TRAINING, TRAINED, FAILED, DEPLOYED]
+        example: DEPLOYED
+      createdAt:
+        type: string
+        format: date-time
+        example: '2023-10-27T10:30:00Z'
+
+  PredictionRequest:
+    type: object
+    required:
+      - modelId
+      - inputData
+    properties:
+      modelId:
+        type: string
+        format: uuid
+        description: The ID of the model to use for prediction.
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      inputData:
+        type: object
+        description: The input data for the prediction,
+        additionalProperties: true
+        example:
+          feature1: 10.5
+          feature2: "Value A"
+          feature3: true
+
+  PredictionResponse:
+    type: object
+    properties:
+      predictId:
+        type: string
+        format: uuid
+        example: e678f2ee-1a2b-3c4d-5e6f-7a8b9c0d1e2f
+      prediction:
+        type: object
+        description: The result of the prediction.
+        additionalProperties: true
+        example:
+          churnProbability: 0.75
+          class: "Churn"
+      modelId:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      timestamp:
+        type: string
+        format: date-time
+        example: '2023-10-27T11:00:00Z'
+
+  PredictionStatus:
+    type: object
+    properties:
+      predictId:
+        type: string
+        format: uuid
+        example: e678f2ee-1a2b-3c4d-5e6f-7a8b9c0d1e2f
+      status:
+        type: string
+        enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+        example: COMPLETED
+      modelId:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      startTime:
+        type: string
+        format: date-time
+        example: '2023-10-27T10:59:00Z'
+      endTime:
+        type: string
+        format: date-time
+        example: '2023-10-27T11:00:00Z'
+      errorMessage:
+        type: string
+        description: Error message if prediction failed.
+        example: Invalid input data format.
+
+  PredictionSummary:
+    type: object
+    properties:
+      predictId:
+        type: string
+        format: uuid
+        example: e678f2ee-1a2b-3c4d-5e6f-7a8b9c0d1e2f
+      modelId:
+        type: string
+        format: uuid
+        example: d290f1ee-6c54-4b01-90e6-d701748f0851
+      status:
+        type: string
+        enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+        example: COMPLETED
+      createdAt:
+        type: string
+        format: date-time
+        example: '2023-10-27T11:00:00Z'
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+        example: 400
+      message:
+        type: string
+        example: Invalid request payload.
