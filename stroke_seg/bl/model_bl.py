@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from typing import List, Dict, Any
 
+from stroke_seg.controller.models import TrainingConfig
 from stroke_seg.dao.model_dao import ModelDAO
 from stroke_seg.dao.models import ModelRecord
 from stroke_seg.exceptions import (
@@ -14,7 +15,7 @@ from stroke_seg.exceptions import (
     ModelCreationException,
     DatabaseConnectionException
 )
-from ..logging_config import get_logger
+from stroke_seg.logging_config import get_logger
 
 
 class ModelBL:
@@ -25,7 +26,7 @@ class ModelBL:
         self.model_dao = ModelDAO()
         self.logger = get_logger(__name__)
     
-    def train_model(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def train_model(self, training_conf : TrainingConfig) -> Dict[str, Any]:
         """
         Initiate model training with the provided configuration.
         
@@ -39,15 +40,14 @@ class ModelBL:
             ModelCreationException: If model creation fails due to server error
             DatabaseConnectionException: If database connection fails
         """
-        model_name = data.get('modelName', 'Unnamed Model')
-        self.logger.info(f"Starting model training - Name: {model_name}")
+        self.logger.info(f"Starting model training - Name: {training_conf.model_name}")
         
         try:
             model_record = ModelRecord(
-                name=model_name,
-                images_path=data.get('imagesPath'),
-                labels_path=data.get('labelsPath'),
-                dataset_path=data.get('datasetPath'),
+                name=training_conf.model_name,
+                images_path=training_conf.images_path,
+                labels_path=training_conf.labels_path,
+                dataset_path=training_conf.dataset_path,
                 status='PENDING',
                 progress=0.0,
                 start_time=datetime.now()
@@ -56,7 +56,7 @@ class ModelBL:
             self.model_dao.create(model_record)
             
             self.logger.info(
-                f"Model training record created - ID: {model_record.model_id}, Name: {model_name}",
+                f"Model training record created - ID: {model_record.model_id}, Name: {model_record.name}",
                 extra={'model_id': str(model_record.model_id)}
             )
             
@@ -67,7 +67,7 @@ class ModelBL:
             
         except Exception as e:
             error_msg = str(e).lower()
-            self.logger.error(f"Model training failed - Name: {model_name}, Error: {str(e)}")
+            self.logger.error(f"Model training failed - Name: {training_conf.model_name}, Error: {str(e)}")
             if "connection" in error_msg or "connect" in error_msg:
                 raise DatabaseConnectionException(f"Database connection failed: {str(e)}")
             else:

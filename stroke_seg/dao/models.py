@@ -2,6 +2,8 @@ from peewee import *
 from playhouse.postgres_ext import JSONField
 from datetime import datetime
 import uuid
+
+from stroke_seg.dao import database
 from stroke_seg.dao.database import BaseModel
 
 class ModelRecord(BaseModel):
@@ -20,12 +22,8 @@ class ModelRecord(BaseModel):
     updated_at = DateTimeField(default=datetime.now)
     
     class Meta:
+        database = database
         table_name = 'models'
-    
-    def save(self, *args, **kwargs):
-        """Override save to update the updated_at timestamp."""
-        self.updated_at = datetime.now()
-        return super().save(*args, **kwargs)
 
 class InferenceRecord(BaseModel):
     """ORM model for the inference table."""
@@ -41,9 +39,5 @@ class InferenceRecord(BaseModel):
     updated_at = DateTimeField(default=datetime.now)
     
     class Meta:
+        database = database
         table_name = 'inference'
-    
-    def save(self, *args, **kwargs):
-        """Override save to update the updated_at timestamp."""
-        self.updated_at = datetime.now()
-        return super().save(*args, **kwargs)

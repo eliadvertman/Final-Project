@@ -8,8 +8,8 @@ from testcontainers.postgres import PostgresContainer
 service_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(service_dir))
 
-from main.dao.database import database, close_pool
-from main.dao.models import ModelRecord, InferenceRecord
+from stroke_seg.dao.database import database, close_pool
+from stroke_seg.dao.models import ModelRecord, InferenceRecord
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
@@ -40,7 +40,7 @@ def setup_test_db():
     
     # Reinitialize database connection with new config
     from playhouse.pool import PooledPostgresqlDatabase
-    from main.dao.database import database
+    from stroke_seg.dao.database import database
     
     # Initialize the pool with test configuration
     database.init(

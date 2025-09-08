@@ -15,8 +15,7 @@ class InferenceDAO:
     
     def create(self, inference_record: InferenceRecord) -> InferenceRecord:
         """Create a new inference record."""
-        inference_record.save()
-        return inference_record
+        return inference_record.save(force_insert=True)
     
     
     def get_by_predict_id(self, predict_uuid: uuid.UUID) -> Optional[InferenceRecord]:

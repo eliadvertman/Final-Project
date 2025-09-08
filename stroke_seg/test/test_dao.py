@@ -1,9 +1,10 @@
-import pytest
 import uuid
 from datetime import datetime
-from main.dao.model_dao import ModelDAO
-from main.dao.inference_dao import InferenceDAO
-from main.dao.models import ModelRecord, InferenceRecord
+
+from stroke_seg.dao.inference_dao import InferenceDAO
+from stroke_seg.dao.model_dao import ModelDAO
+from stroke_seg.dao.models import ModelRecord, InferenceRecord
+
 
 class TestDatabaseIntegration:
     """Integration tests for basic CRUD operations across the database."""

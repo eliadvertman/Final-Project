@@ -12,8 +12,7 @@ class ModelDAO:
     
     def create(self, model_record: ModelRecord) -> ModelRecord:
         """Create a new model record."""
-        model_record.save()
-        return model_record
+        return model_record.save(force_insert=True)
     
     
     def get_by_model_id(self, model_uuid: uuid.UUID) -> Optional[ModelRecord]:

@@ -1,10 +1,12 @@
 import time
+from datetime import datetime
 
 from flask import Flask, jsonify
 from flask_cors import CORS
 
 from stroke_seg.controller import model_bp, prediction_bp
-from stroke_seg.dao.database import get_pool_status
+from stroke_seg.dao import ModelRecord
+from stroke_seg.dao.database import get_pool_status, verify_connection
 from stroke_seg.logging_config import setup_logging, get_logger, add_request_id_to_request, log_request_info
 
 app = Flask(__name__)
@@ -13,6 +15,12 @@ CORS(app)
 # Setup logging
 setup_logging('pic_service')
 logger = get_logger(__name__)
+
+# Verify database connection and create tables on startup
+if verify_connection():
+    logger.info("Database connection verified")
+else:
+    logger.error("Failed to connect to database - application may not work properly")
 
 # Register blueprints
 app.register_blueprint(model_bp)

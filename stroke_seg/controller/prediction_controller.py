@@ -3,11 +3,12 @@
 from flask import Blueprint, request, jsonify
 
 from stroke_seg.bl.inference_bl import InferenceBL
+from stroke_seg.controller.models import InferenceInput
 from stroke_seg.error_handler import handle_errors
 from stroke_seg.logging_config import get_logger
 
 
-prediction_bp = Blueprint('prediction', __name__, url_prefix='/api/v1/predict')
+prediction_bp = Blueprint('prediction', __name__, url_prefix='/api/v1/inference')
 inference_bl = InferenceBL()
 logger = get_logger(__name__)
 
@@ -17,10 +18,10 @@ logger = get_logger(__name__)
 def make_prediction():
     """Make a prediction using a specified model."""
     data = request.get_json(force=True)
-    model_id = data.get('modelId', 'unknown')
-    logger.info(f"Prediction requested - Model ID: {model_id}")
-    result = inference_bl.make_prediction(data)
-    logger.info(f"Prediction completed - ID: {result.get('predictId')}, Model: {model_id}")
+    inference_input : InferenceInput = InferenceInput.model_validate(data)
+    logger.info(f"Prediction requested - Model ID: {inference_input.model_id}")
+    result = inference_bl.make_prediction(inference_input)
+    logger.info(f"Prediction completed - ID: {result.get('predictId')}, Model: {inference_input.model_id}")
     return jsonify(result), 200
 
 
@@ -28,9 +29,9 @@ def make_prediction():
 @handle_errors
 def get_prediction_status(predict_id):
     """Get prediction status."""
-    logger.debug(f"Prediction status requested - ID: {predict_id}")
+    logger.info(f"Prediction status requested - ID: {predict_id}")
     result = inference_bl.get_prediction_status(predict_id)
-    logger.debug(f"Prediction status retrieved - ID: {predict_id}, Status: {result.get('status')}")
+    logger.info(f"Prediction status retrieved - ID: {predict_id}, Status: {result.get('status')}")
     return jsonify(result), 200
 
 

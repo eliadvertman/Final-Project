@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from typing import List, Dict, Any
 
+from stroke_seg.controller.models import InferenceInput
 from stroke_seg.dao.inference_dao import InferenceDAO
 from stroke_seg.dao.model_dao import ModelDAO
 from stroke_seg.dao.models import InferenceRecord
@@ -25,12 +26,12 @@ class InferenceBL:
         self.inference_dao = InferenceDAO()
         self.model_dao = ModelDAO()
     
-    def make_prediction(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def make_prediction(self, inference_input : InferenceInput) -> Dict[str, Any]:
         """
         Make a prediction using a specified model.
         
         Args:
-            data: Prediction request data containing modelId and inputData
+            inference_input: Prediction request data containing modelId and input path
             
         Returns:
             Dict containing prediction result and metadata
@@ -42,7 +43,7 @@ class InferenceBL:
             DatabaseException: If prediction creation fails
         """
         try:
-            model_uuid = uuid.UUID(data.get('modelId', ''))
+            model_uuid = uuid.UUID(inference_input.model_id)
         except (ValueError, TypeError):
             raise InvalidUUIDException("model ID")
         
@@ -60,7 +61,7 @@ class InferenceBL:
         try:
             inference_record = InferenceRecord(
                 model_id=model_record,
-                input_data=data.get('inputData', {}),
+                input_data=inference_input.input_path,
                 prediction=prediction_result,
                 status='COMPLETED',
                 start_time=datetime.now(),

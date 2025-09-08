@@ -1,8 +1,10 @@
 """Model management controller for handling model-related HTTP requests."""
 
 from flask import Blueprint, request, jsonify
+from pydantic import ValidationError
 
 from stroke_seg.bl.model_bl import ModelBL
+from stroke_seg.controller.models import TrainingConfig
 from stroke_seg.error_handler import handle_errors
 from stroke_seg.logging_config import get_logger
 
@@ -16,20 +18,29 @@ logger = get_logger(__name__)
 @handle_errors
 def train_model():
     """Initiate model training."""
-    data = request.get_json(force=True)
-    logger.info(f"Model training requested - Name: {data.get('modelName', 'Unnamed')}")
-    result = model_bl.train_model(data)
-    logger.info(f"Model training initiated - ID: {result.get('modelId')}")
-    return jsonify(result), 202
+    try:
+        raw_data = request.get_json(force=True)
+        training_config : TrainingConfig = TrainingConfig.model_validate(raw_data)
+        logger.info(f"Model training requested - Name: {training_config.model_name}")
+        result = model_bl.train_model(training_config)
+        logger.info(f"Model training initiated - ID: {result.get('modelId')}")
+        return jsonify(result), 202
+        
+    except ValidationError as e:
+        logger.warning(f"Validation error in train_model: {e}")
+        raise e(f"Invalid training configuration: {str(e)}")
+    except Exception as e:
+        logger.error(f"Unexpected error in train_model: {e}")
+        raise e
 
 
 @model_bp.route('/<model_id>/status', methods=['GET'])
 @handle_errors
 def get_model_status(model_id):
     """Get model training status."""
-    logger.debug(f"Model status requested - ID: {model_id}")
+    logger.info(f"Model status requested - ID: {model_id}")
     result = model_bl.get_model_status(model_id)
-    logger.debug(f"Model status retrieved - ID: {model_id}, Status: {result.get('status')}")
+    logger.info(f"Model status retrieved - ID: {model_id}, Status: {result.get('status')}")
     return jsonify(result), 200
 
 

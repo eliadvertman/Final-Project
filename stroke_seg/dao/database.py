@@ -1,7 +1,8 @@
 import os
+
+from dotenv import load_dotenv
 from peewee import Model
 from playhouse.pool import PooledPostgresqlDatabase
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -30,6 +31,17 @@ database = PooledPostgresqlDatabase(
     stale_timeout=db_config['stale_timeout'],
     timeout=db_config['timeout']
 )
+
+
+def verify_connection():
+    """Verify database connection is working."""
+    try:
+        with database:
+            database.execute_sql("SELECT 1")
+        return True
+    except Exception as e:
+        print(f"Database connection failed: {e}")
+        return False
 
 class BaseModel(Model):
     """Base model class that all models inherit from."""
