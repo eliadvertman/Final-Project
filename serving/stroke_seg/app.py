@@ -24,7 +24,6 @@ else:
 app.register_blueprint(model_bp)
 app.register_blueprint(prediction_bp)
 
-# Connection pool handles connections automatically - no manual management needed
 
 # Request logging middleware
 @app.before_request
