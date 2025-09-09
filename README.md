@@ -56,12 +56,36 @@ python serving/stroke_seg/app.py
 curl http://localhost:8080/health/db
 
 # Model management
-curl -X POST http://localhost:8080/api/v1/model/train
-curl http://localhost:8080/api/v1/model/list
+curl -X POST http://localhost:8080/api/v1/model/train \
+  -H "Content-Type: application/json" \
+  -d '{
+    "modelName": "CustomerChurnPredictor",
+    "imagesPath": "/work/images",
+    "labelsPath": "/work/labels",
+    "datasetPath": "/work/"
+  }'
+
+curl "http://localhost:8080/api/v1/model/list?limit=10&offset=0"
+
+# Get model status (replace UUID with actual model ID)
+curl http://localhost:8080/api/v1/model/d290f1ee-6c54-4b01-90e6-d701748f0851/status
 
 # Predictions  
-curl -X POST http://localhost:8080/api/v1/predict/predict
-curl http://localhost:8080/api/v1/predict/list
+curl -X POST http://localhost:8080/api/v1/predict/predict \
+  -H "Content-Type: application/json" \
+  -d '{
+    "modelId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+    "inputData": {
+      "feature1": 10.5,
+      "feature2": "Value A",
+      "feature3": true
+    }
+  }'
+
+curl "http://localhost:8080/api/v1/predict/list?limit=10&offset=0"
+
+# Get prediction status (replace UUID with actual prediction ID)
+curl http://localhost:8080/api/v1/predict/e678f2ee-1a2b-3c4d-5e6f-7a8b9c0d1e2f/status
 ```
 
 ## Development Commands
@@ -117,3 +141,57 @@ docker-compose -f db/docker-compose.yml up -d database
 # Run tests against existing database
 pytest serving/stroke_seg/test/ -v
 ```
+
+
+
+# Setup 
+
+## local
+
+### DB
+run docker-compose 
+```bash
+docker-compose -f db/docker-compose.yml up -d database
+```
+
+### Webserver
+run app.py
+```bash
+python -m stroke_seg.app
+```
+
+### Frontend
+```bash
+npm run dev
+```
+*make sure that the ports routing are correct 
+
+## runlogin
+
+### DB
+run this on runlogin:
+1. build singularity container out of postgres-lean.def 
+```bash
+singularity build --notest postgres-lean.sif postgres-lean.def
+```
+2. run singularity container 
+```bash
+singularity run --writable-tmpfs --bind /home/veeliad/work/service/Final-Project/postgres_data/:/var/lib/postgresql/data postgres-lean.sif
+```
+3. create db and tables (this needs to run only on the 1st time)
+```bash
+python db_setup.py
+```
+
+### webserver 
+run app.py on runlogin
+```bash
+python -m stroke_seg.app
+```
+
+### Frontend
+run this on local machine 
+```bash
+npm run dev
+```
+*make sure that the ports routing are correct and there's port forwarding to runlogin 
