@@ -3,7 +3,6 @@ from playhouse.postgres_ext import JSONField
 from datetime import datetime
 import uuid
 
-from stroke_seg.dao import database
 from stroke_seg.dao.database import BaseModel
 
 class ModelRecord(BaseModel):
@@ -22,7 +21,6 @@ class ModelRecord(BaseModel):
     updated_at = DateTimeField(default=datetime.now)
     
     class Meta:
-        database = database
         table_name = 'models'
 
 class InferenceRecord(BaseModel):
@@ -39,5 +37,4 @@ class InferenceRecord(BaseModel):
     updated_at = DateTimeField(default=datetime.now)
     
     class Meta:
-        database = database
         table_name = 'inference'

@@ -1,12 +1,10 @@
 import time
-from datetime import datetime
 
 from flask import Flask, jsonify
 from flask_cors import CORS
 
 from stroke_seg.controller import model_bp, prediction_bp
-from stroke_seg.dao import ModelRecord
-from stroke_seg.dao.database import get_pool_status, verify_connection
+from stroke_seg.dao.database import get_pool_status, verify_connection, database
 from stroke_seg.logging_config import setup_logging, get_logger, add_request_id_to_request, log_request_info
 
 app = Flask(__name__)
@@ -32,6 +30,7 @@ app.register_blueprint(prediction_bp)
 @app.before_request
 def before_request():
     """Add request ID and start timing."""
+    database.connect()
     add_request_id_to_request()
     from flask import request
     request.start_time = time.time()
@@ -43,6 +42,8 @@ def after_request(response):
     from flask import request
     if hasattr(request, 'start_time'):
         log_request_info(logger, request.start_time, response.status_code)
+    if not database.is_closed():
+        database.close()
     return response
 
 @app.route('/health/db')

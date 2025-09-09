@@ -16,7 +16,7 @@ def get_database_config():
         'password': os.getenv('DB_PASSWORD', 'pic_password'),
         'max_connections': int(os.getenv('DB_MAX_CONNECTIONS', 5)),
         'stale_timeout': int(os.getenv('DB_STALE_TIMEOUT', 300)),
-        'timeout': int(os.getenv('DB_CONNECTION_TIMEOUT', 30)),
+        'timeout': int(os.getenv('DB_CONNECTION_TIMEOUT', 10)),
     }
 
 db_config = get_database_config()
@@ -36,8 +36,7 @@ database = PooledPostgresqlDatabase(
 def verify_connection():
     """Verify database connection is working."""
     try:
-        with database:
-            database.execute_sql("SELECT 1")
+        database.execute_sql("SELECT 1")
         return True
     except Exception as e:
         print(f"Database connection failed: {e}")
