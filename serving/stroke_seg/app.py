@@ -66,5 +66,5 @@ def db_health():
 # Error handling is now centralized in controllers using @handle_errors decorator
 
 if __name__ == '__main__':
-    logger.info("Starting POC ML Prediction Service on port 8080")
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    logger.info("Starting POC ML Prediction Service on port 1000")
+    app.run(debug=True, host='0.0.0.0', port=1000)
