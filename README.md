@@ -5,20 +5,21 @@ A scalable machine learning prediction service with PostgreSQL database persiste
 ## Project Structure
 
 ```
-├── service/                    # Python ML service
-│   ├── main/                  # Main application package
+├── serving/                   # Python ML service
+│   ├── stroke_seg/            # Main application package
 │   │   ├── app.py             # Flask application with health checks
 │   │   ├── controller/        # REST API controllers
 │   │   ├── bl/                # Business logic layer
 │   │   ├── dao/               # Data access layer (Peewee ORM + connection pooling)
 │   │   ├── error_handler.py   # Centralized error handling
-│   │   └── exceptions.py      # Custom exception hierarchy
-│   ├── test/                  # Comprehensive test suite with testcontainers
+│   │   ├── exceptions.py      # Custom exception hierarchy
+│   │   ├── logging_config.py  # Centralized logging configuration
+│   │   └── test/              # Comprehensive test suite with testcontainers
 │   └── requirements.txt       # Python dependencies
 ├── db/                        # Database configuration
 │   ├── docker-compose.yml     # Docker setup
-│   ├── postgres.def           # Singularity definition
-│   └── init/                  # Database initialization scripts
+│   ├── postgres-fixed.def     # Singularity definition
+│   └── DATABASE_SETUP.md      # Database setup instructions
 └── stroke_seg/                # Virtual environment (excluded from git)
 ```
 
@@ -40,13 +41,13 @@ A scalable machine learning prediction service with PostgreSQL database persiste
 source stroke_seg/bin/activate
 
 # Install dependencies
-pip install -r service/requirements.txt
+pip install -r serving/requirements.txt
 
 # Run tests (automatic container management)
-pytest service/test/ -v
+pytest serving/stroke_seg/test/ -v
 
 # Start the Flask application
-python service/main/app.py
+python serving/stroke_seg/app.py
 ```
 
 **API Endpoints:**
@@ -102,10 +103,10 @@ singularity run --bind /custom/data/path:/var/lib/postgresql/data postgres.sif
 **Automated testing (recommended):**
 ```bash
 # Tests automatically start/stop PostgreSQL containers
-pytest service/test/ -v
+pytest serving/stroke_seg/test/ -v
 
 # Run specific test
-pytest service/test/test_integration.py::TestDatabaseIntegration::test_model_dao_crud_integration -v
+pytest serving/stroke_seg/test/test_dao.py::TestModelDAO::test_create_model -v
 ```
 
 **Manual testing with existing database:**
@@ -114,5 +115,5 @@ pytest service/test/test_integration.py::TestDatabaseIntegration::test_model_dao
 docker-compose -f db/docker-compose.yml up -d database
 
 # Run tests against existing database
-pytest service/test/ -v
+pytest serving/stroke_seg/test/ -v
 ```

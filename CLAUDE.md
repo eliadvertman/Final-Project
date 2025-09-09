@@ -28,7 +28,7 @@ This is a machine learning prediction service project (PIC - Prediction and Mode
 ### Database Layer (`db/`)
 - **PostgreSQL database**: Configured for both Docker (development) and Singularity (HPC production) environments
 - **`docker-compose.yml`**: Docker Compose configuration for PostgreSQL
-- **`postgres.def`**: Singularity definition file for HPC deployment
+- **`postgres-fixed.def`**: Singularity definition file for HPC deployment
 - **`DATABASE_SETUP.md`**: Comprehensive setup instructions for both environments
 
 
@@ -160,20 +160,21 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 
 ## Python
 - `source stroke_seg/bin/activate` : Activate virtual environment
-- `pip install -r service/requirements.txt` : Install requirements (includes testcontainers)
-- `pytest service/test/` : Run integration tests with automatic container management
-- `pytest service/test/ -v` : Run tests with verbose output 
+- `pip install -r serving/requirements.txt` : Install requirements (includes testcontainers)
+- `python serving/stroke_seg/app.py` : Start the Flask application
+- `pytest serving/stroke_seg/test/` : Run integration tests with automatic container management
+- `pytest serving/stroke_seg/test/ -v` : Run tests with verbose output 
 
 ## Docker Commands
 
 **PostgreSQL Database:**
-- `docker-compose up -d database` : Start the postgres container
-- `docker-compose down` : Stop and remove containers
-- `docker-compose ps` : Check container status
-- `docker logs db-database-1` : View container logs
-- `docker exec db-database-1 psql -U pic_user -d pic_db -c "\dt"` : List database tables
-- `docker exec db-database-1 psql -U pic_user -d pic_db -c "\d [table_name]"` : Describe table structure
-- `DB_VOLUME_PATH=/tmp/postgres_data docker-compose up -d database` : Start with custom volume path (useful for permission issues)
+- `docker-compose -f db/docker-compose.yml up -d database` : Start the postgres container
+- `docker-compose -f db/docker-compose.yml down` : Stop and remove containers
+- `docker-compose -f db/docker-compose.yml ps` : Check container status
+- `docker-compose -f db/docker-compose.yml logs database` : View container logs
+- `docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db -c "\dt"` : List database tables
+- `docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db -c "\d [table_name]"` : Describe table structure
+- `DB_VOLUME_PATH=/tmp/postgres_data docker-compose -f db/docker-compose.yml up -d database` : Start with custom volume path (useful for permission issues)
 
 **Database Verification:**
 - Tables created: `models` and `inference`
