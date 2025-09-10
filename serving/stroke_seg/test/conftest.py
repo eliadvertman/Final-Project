@@ -9,7 +9,7 @@ service_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(service_dir))
 
 from stroke_seg.dao.database import database, close_pool
-from stroke_seg.dao.models import ModelRecord, InferenceRecord
+from stroke_seg.dao.models import TrainingRecord, InferenceRecord
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
@@ -71,8 +71,8 @@ def clean_db():
     """Clean database before each test."""
     # Delete all records to ensure test isolation
     InferenceRecord.delete().execute()
-    ModelRecord.delete().execute()
+    TrainingRecord.delete().execute()
     yield
     # Clean up after test
     InferenceRecord.delete().execute()
-    ModelRecord.delete().execute()
+    TrainingRecord.delete().execute()

@@ -7,12 +7,11 @@ from typing import List, Dict, Any
 from stroke_seg.controller.models import InferenceInput
 from stroke_seg.dao.inference_dao import InferenceDAO
 from stroke_seg.dao.model_dao import ModelDAO
-from stroke_seg.dao.models import InferenceRecord
+from stroke_seg.dao.models import InferenceRecord, ModelRecord
 from stroke_seg.exceptions import (
     ModelNotFoundException,
     PredictionNotFoundException,
     InvalidUUIDException,
-    ModelNotReadyException,
     InvalidPaginationException,
     DatabaseException
 )
@@ -47,14 +46,11 @@ class InferenceBL:
         except (ValueError, TypeError):
             raise InvalidUUIDException("model ID")
         
-        model_record = self.model_dao.get_by_model_id(model_uuid)
+        model_record : ModelRecord = self.model_dao.get_by_id(model_uuid)
         
         if not model_record:
             raise ModelNotFoundException(str(model_uuid))
-        
-        if model_record.status not in ['TRAINED', 'DEPLOYED']:
-            raise ModelNotReadyException(model_record.status)
-        
+
         # Mock prediction logic
         prediction_result = {"result": "mock_prediction", "confidence": 0.95}
         
@@ -73,7 +69,7 @@ class InferenceBL:
             return {
                 "predictId": str(inference_record.predict_id),
                 "prediction": prediction_result,
-                "modelId": str(model_record.model_id),
+                "modelId": str(model_record.id),
                 "timestamp": inference_record.created_at.isoformat() + 'Z'
             }
             

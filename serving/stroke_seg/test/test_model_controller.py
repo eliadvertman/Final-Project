@@ -3,8 +3,8 @@ import json
 import uuid
 from datetime import datetime
 
-from main.dao.models import ModelRecord
-from main.app import app
+from stroke_seg.dao.models import TrainingRecord
+from stroke_seg.app import app
 
 @pytest.fixture
 def client():
@@ -41,7 +41,7 @@ class TestModelTraining:
             "datasetPath": "/test/dataset"
         }
         
-        response = client.post('/api/v1/model/train', 
+        response = client.post('/api/v1/training/train', 
                              data=json.dumps(payload),
                              content_type='application/json')
         
@@ -64,7 +64,7 @@ class TestModelTraining:
             "labelsPath": "/test/labels"
         }
         
-        response = client.post('/api/v1/model/train', 
+        response = client.post('/api/v1/training/train', 
                              data=json.dumps(payload),
                              content_type='application/json')
         
@@ -79,7 +79,7 @@ class TestModelTraining:
     
     def test_train_model_invalid_json(self, client, clean_db):
         """Test training model with invalid JSON."""
-        response = client.post('/api/v1/model/train', 
+        response = client.post('/api/v1/training/train', 
                              data="invalid json",
                              content_type='application/json')
         
@@ -89,7 +89,7 @@ class TestModelTraining:
     
     def test_train_model_empty_payload(self, client, clean_db):
         """Test training model with empty payload."""
-        response = client.post('/api/v1/model/train', 
+        response = client.post('/api/v1/training/train', 
                              data=json.dumps({}),
                              content_type='application/json')
         
@@ -108,7 +108,7 @@ class TestModelTraining:
             "modelName": "MinimalModel"
         }
         
-        response = client.post('/api/v1/model/train', 
+        response = client.post('/api/v1/training/train', 
                              data=json.dumps(payload),
                              content_type='application/json')
         

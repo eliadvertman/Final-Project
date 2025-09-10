@@ -4,6 +4,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 
 from stroke_seg.controller import model_bp, prediction_bp
+from stroke_seg.controller.training_controller import training_bp
 from stroke_seg.dao.database import get_pool_status, verify_connection, database
 from stroke_seg.logging_config import setup_logging, get_logger, add_request_id_to_request, log_request_info
 
@@ -21,6 +22,7 @@ else:
     logger.error("Failed to connect to database - application may not work properly")
 
 # Register blueprints
+app.register_blueprint(training_bp)
 app.register_blueprint(model_bp)
 app.register_blueprint(prediction_bp)
 
@@ -66,5 +68,5 @@ def db_health():
 # Error handling is now centralized in controllers using @handle_errors decorator
 
 if __name__ == '__main__':
-    logger.info("Starting POC ML Prediction Service on port 1000")
-    app.run(debug=True, host='0.0.0.0', port=1000)
+    logger.info("Starting POC ML Prediction Service on port 8080")
+    app.run(debug=True, host='0.0.0.0', port=8080)
