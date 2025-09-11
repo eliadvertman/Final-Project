@@ -4,10 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a machine learning prediction service project (PIC - Prediction and Model Management) that consists of:
+This is a machine learning prediction service project (Prediction and Model Management) that consists of:
 - A Python web service for model training and prediction
 - A PostgreSQL database for data persistence
 - Docker and Singularity deployment configurations
+
+This project is a university project and not a production project.
 
 ## Architecture
 
@@ -150,6 +152,7 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 
 1. First think through the problem, read the codebase for relevant files, and write a plan to tasks/todo.md.
 2. The plan should have a list of todo items that you can check off as you complete them
+3. As this is a university project, when planning, consider the functional requirements. non-functional requirements like testing is not important.  
 3. Before you begin working, check in with me and I will verify the plan.
 4. Then, begin working on the todo items, marking them as complete as you go.
 5. Every step of the way just give me a high level explanation of what changes you made

@@ -9,12 +9,12 @@
 #SBATCH --gres=gpu:a100:1
 #SBATCH --qos=gpu
 
-#SBATCH --job-name={model_name}-{model_id}
+#SBATCH --job-name={model_name}-{timestamp}
 #SBATCH --output=%x-%j.out  # %x => job-name, %j => jobid
 #SBATCH --error=%x-%j.err
 
 
 ## run time
-singularity run --fakeroot --overlay TEST/overlay --nv --env device=cuda --env fold_index=1 --env task_number=130 --pwd /stroke_segmentation --mount type=bind,source=$(pwd)/output,destination=/stroke_segmentation/nnunet_results training_big_lesions.sif
+singularity run --fakeroot --overlay TEST/overlay --nv --env device=cuda --env fold_index={fold_index} --env task_number={task_number} --pwd /stroke_segmentation --mount type=bind,source=$(pwd)/output,destination=/stroke_segmentation/nnunet_results training_big_lesions.sif
 
 

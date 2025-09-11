@@ -16,14 +16,17 @@ from stroke_seg.exceptions import (
     DatabaseConnectionException
 )
 from stroke_seg.logging_config import get_logger
+from stroke_seg.training import SbatchTemplateVariables
+from stroke_seg.training.training_facade import ModelTrainingFacade
 
 
 class TrainingBL:
     """Business logic class for training management operations."""
     
     def __init__(self):
-        """Initialize the business logic layer with DAO."""
+        """Initialize the business logic layer with DAO and Singularity interface."""
         self.training_dao = TrainingDAO()
+        self.model_training_facade = ModelTrainingFacade()
         self.logger = get_logger(__name__)
     
     def train_model(self, training_conf: TrainingConfig) -> Dict[str, Any]:
@@ -34,7 +37,7 @@ class TrainingBL:
             training_conf: Training configuration data
             
         Returns:
-            Dict containing success message and training ID
+            Dict containing success message, training ID, and batch job ID
             
         Raises:
             ModelCreationException: If training creation fails due to server error
@@ -43,30 +46,49 @@ class TrainingBL:
         self.logger.info(f"Starting training - Name: {training_conf.model_name}")
         
         try:
+            # Prepare variables for sbatch template
+            training_variables = SbatchTemplateVariables(
+                model_name=training_conf.model_name,
+                fold_index = 1, #TODO - replace with arg
+                task_number = 130 #TODO - replace with arg
+            )
+            
+            # Submit job to Singularity via sbatch
+            job_id = self.model_training_facade.submit_training_job(training_variables)
+
             training_record = TrainingRecord(
                 name=training_conf.model_name,
                 images_path=training_conf.images_path,
                 labels_path=training_conf.labels_path,
+                job_id = job_id,
                 status='TRAINING',
                 progress=0.0,
+                batch_job_id= job_id,
                 start_time=datetime.now()
             )
-            
+
             self.training_dao.create(training_record)
-            
+
             self.logger.info(
                 f"Training record created - ID: {training_record.id}, Name: {training_record.name}",
                 extra={'training_id': str(training_record.id)}
             )
+
+            self.logger.info(
+                f"Training job submitted - Training ID: {training_record.id}, Job ID: {job_id}",
+                extra={'training_id': str(training_record.id), 'job_id': job_id}
+            )
             
             return {
                 "message": "Training started.",
-                "trainingId": str(training_record.id)
+                "trainingId": str(training_record.id),
+                "batchJobId": job_id
             }
             
         except Exception as e:
             error_msg = str(e).lower()
             self.logger.error(f"Training failed - Name: {training_conf.model_name}, Error: {str(e)}")
+
             if "connection" in error_msg or "connect" in error_msg:
                 raise DatabaseConnectionException(f"Database connection failed: {str(e)}")
             else:

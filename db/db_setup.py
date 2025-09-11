@@ -39,6 +39,8 @@ def get_config():
                        help='Database port (default: 5432)')
     parser.add_argument('--db_host', default=os.getenv('DB_HOST', 'localhost'),
                        help='Database host (default: localhost)')
+    parser.add_argument('--cleanup', action='store_true',
+                       help='Drop existing tables before creating new ones')
     
     return parser.parse_args()
 
@@ -101,6 +103,22 @@ def run_sql_file(cursor, sql_file_path):
         raise
 
 
+def cleanup_tables(cursor):
+    """Drop existing tables in reverse dependency order."""
+    tables_to_drop = ['inference', 'model', 'training']
+    
+    logger.info("Starting table cleanup...")
+    for table_name in tables_to_drop:
+        try:
+            cursor.execute(sql.SQL("DROP TABLE IF EXISTS {} CASCADE").format(sql.Identifier(table_name)))
+            logger.info(f"Dropped table '{table_name}'")
+        except psycopg2.Error as e:
+            logger.error(f"Error dropping table '{table_name}': {e}")
+            raise
+    
+    logger.info("Table cleanup completed")
+
+
 def find_init_scripts():
     """Find all SQL initialization scripts in the init directory."""
     script_dir = Path(__file__).parent
@@ -151,6 +169,10 @@ def main():
         )
         
         with db_conn.cursor() as cursor:
+            # Cleanup tables if requested
+            if config.cleanup:
+                cleanup_tables(cursor)
+            
             # Run initialization scripts
             init_scripts = find_init_scripts()
             

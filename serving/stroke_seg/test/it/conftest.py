@@ -16,18 +16,18 @@ def setup_test_db():
     """Setup test database configuration with testcontainers."""
     import docker
     from testcontainers.postgres import PostgresContainer
-    
+
     if 'TESTCONTAINERS_REUSE_ENABLE' not in os.environ:
         os.environ['TESTCONTAINERS_REUSE_ENABLE'] = 'false'
-    
+
     # Start PostgreSQL container
     postgres = PostgresContainer("postgres:15-alpine")
     postgres.with_env("POSTGRES_DB", "pic_db")
-    postgres.with_env("POSTGRES_USER", "pic_user") 
+    postgres.with_env("POSTGRES_USER", "pic_user")
     postgres.with_env("POSTGRES_PASSWORD", "pic_password")
-    
+
     postgres.start()
-    
+
     # Configure database connection for testing
     os.environ['DB_NAME'] = postgres.dbname
     os.environ['DB_HOST'] = postgres.get_container_host_ip()
@@ -37,11 +37,11 @@ def setup_test_db():
     # Use smaller pool for testing
     os.environ['DB_MAX_CONNECTIONS'] = '3'
     os.environ['DB_STALE_TIMEOUT'] = '60'
-    
+
     # Reinitialize database connection with new config
     from playhouse.pool import PooledPostgresqlDatabase
     from stroke_seg.dao.database import database
-    
+
     # Initialize the pool with test configuration
     database.init(
         postgres.dbname,
@@ -53,15 +53,15 @@ def setup_test_db():
         stale_timeout=60,
         timeout=10
     )
-    
+
     # Create tables using SQL initialization script
     init_script_path = Path(__file__).parent.parent.parent / "db" / "init" / "01_init_schema.sql"
     with open(init_script_path, 'r') as f:
         init_sql = f.read()
     database.execute_sql(init_sql)
-    
+
     yield
-    
+
     # Close the connection pool properly
     close_pool()
     postgres.stop()
