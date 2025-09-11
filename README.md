@@ -55,19 +55,22 @@ python serving/stroke_seg/app.py
 # Health check
 curl http://localhost:8080/health/db
 
-# Model management
-curl -X POST http://localhost:8080/api/v1/model/train \
+# Training management  
+curl -X POST http://localhost:8080/api/v1/training/train \
   -H "Content-Type: application/json" \
   -d '{
     "modelName": "CustomerChurnPredictor",
     "imagesPath": "/work/images",
-    "labelsPath": "/work/labels",
-    "datasetPath": "/work/"
+    "labelsPath": "/work/labels"
   }'
 
+# Get training status (replace UUID with actual training ID)
+curl http://localhost:8080/api/v1/training/d290f1ee-6c54-4b01-90e6-d701748f0851/status
+
+# Model management
 curl "http://localhost:8080/api/v1/model/list?limit=10&offset=0"
 
-# Get model status (replace UUID with actual model ID)
+# Get model status (replace UUID with actual model ID)  
 curl http://localhost:8080/api/v1/model/d290f1ee-6c54-4b01-90e6-d701748f0851/status
 
 # Predictions  

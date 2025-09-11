@@ -15,7 +15,6 @@ class TrainingRecord(BaseModel):
     job_id = CharField(max_length=36, null=False)
     status = CharField(max_length=20, null=False, constraints=[Check("status IN ('SUBMITTING', 'TRAINING', 'TRAINED', 'FAILED')")])
     progress = FloatField(default=0.0)
-    batch_job_id = CharField(max_length=50, null=True)
     start_time = DateTimeField(null=True)
     end_time = DateTimeField(null=True)
     error_message = TextField(null=True)

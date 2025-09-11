@@ -13,18 +13,29 @@ This project is a university project and not a production project.
 
 ## Architecture
 
-### Service Layer (`service/`)
-- **`main/`**: Main application package containing core functionality
+### Service Layer (`serving/stroke_seg/`)
+- **Main application package containing core functionality:**
+  - **`app.py`**: Flask application with health checks and route registration
   - **`logging_config.py`**: Centralized logging configuration with structured logging
-  - **`controller/swagger.yaml`**: OpenAPI specification defining the ML prediction API
-  - **`dao/`**: Data access object layer with complete CRUD operations
-    - **`database.py`**: Database connection and configuration
-    - **`models.py`**: Peewee ORM model definitions (ModelRecord, InferenceRecord)
-    - **`model_dao.py`**: Model data access operations
-    - **`inference_dao.py`**: Inference data access operations
+  - **`error_handler.py`**: Centralized error handling with smart decorators
+  - **`exceptions.py`**: Custom exception hierarchy for proper error responses
+- **`controller/`**: REST API controllers
+  - **`model_controller.py`**: Model management endpoints
+  - **`prediction_controller.py`**: Prediction endpoints
+  - **`training_controller.py`**: Training management endpoints
+- **`bl/`**: Business logic layer
+  - **`model_bl.py`**: Model business logic
+  - **`inference_bl.py`**: Prediction business logic  
+  - **`training_bl.py`**: Training business logic
+- **`dao/`**: Data access object layer with complete CRUD operations
+  - **`database.py`**: Database connection and configuration
+  - **`models.py`**: Peewee ORM model definitions (ModelRecord, InferenceRecord)
+  - **`model_dao.py`**: Model data access operations
+  - **`inference_dao.py`**: Inference data access operations
+  - **`training_dao.py`**: Training data access operations
 - **`test/`**: Comprehensive test suite with automated container management
   - **`conftest.py`**: Test configuration with testcontainers support
-  - **`test_integration.py`**: Integration tests for database operations
+  - **`test_dao.py`**: Integration tests for database operations
 - **`requirements.txt`**: Python dependencies including testcontainers
 
 ### Database Layer (`db/`)
@@ -74,10 +85,14 @@ Database connection uses environment variables for configuration with Peewee ORM
 
 The service is designed to provide these endpoints (defined in `swagger.yaml`):
 
+**Training Management:**
+- `POST /api/v1/training/train` - Initiate model training
+- `GET /api/v1/training/{trainingId}/status` - Get training status
+- `GET /api/v1/training/list` - List all trainings
+
 **Model Management:**
-- `POST /api/v1/model/train` - Initiate model training
-- `GET /api/v1/model/{modelId}/status` - Get model training status
 - `GET /api/v1/model/list` - List all available models
+- `GET /api/v1/model/{modelId}/status` - Get model status 
 
 **Prediction:**
 - `POST /api/v1/predict/predict` - Make predictions
@@ -88,17 +103,17 @@ The service is designed to provide these endpoints (defined in `swagger.yaml`):
 
 **Implemented:**
 - Complete database layer with Peewee ORM and connection pooling
-- Data access objects for models and inference with UUID primary keys
-- Database schema with models and inference tables (VARCHAR UUID fields)
+- Data access objects for models, inference, and training with UUID primary keys
+- Database schema with models, inference, and training tables (VARCHAR UUID fields)
 - Comprehensive test suite with testcontainers
 - Automated database container management for tests
 - Connection pooling for improved performance and scalability
-- Business logic layer (ModelBL, InferenceBL)
+- Complete business logic layer (ModelBL, InferenceBL, TrainingBL)
 - Complete API endpoint implementations (Flask controllers)
 - Centralized error handling with smart decorators
 - Custom exception hierarchy for proper error responses
 - **Comprehensive logging infrastructure with structured logging across all layers**
-- API specification is defined
+- Three-tier architecture: Controllers → Business Logic → Data Access
 - Both Docker and Singularity deployment configurations are ready
 
 **Missing Implementation:**
