@@ -5,7 +5,8 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 from stroke_seg.dao.training_dao import TrainingDAO
-from stroke_seg.dao.models import TrainingRecord
+from stroke_seg.dao.job_dao import JobDAO
+from stroke_seg.dao.models import TrainingRecord, JobRecord
 from stroke_seg.controller.models import TrainingConfig
 from stroke_seg.exceptions import (
     ModelNotFoundException,
@@ -26,6 +27,7 @@ class TrainingBL:
     def __init__(self):
         """Initialize the business logic layer with DAO and Singularity interface."""
         self.training_dao = TrainingDAO()
+        self.job_dao = JobDAO()
         self.model_training_facade = ModelTrainingFacade()
         self.logger = get_logger(__name__)
     
@@ -49,21 +51,30 @@ class TrainingBL:
             # Prepare variables for sbatch template
             training_variables = SbatchTemplateVariables(
                 model_name=training_conf.model_name,
-                fold_index = 1, #TODO - replace with arg
-                task_number = 130 #TODO - replace with arg
+                fold_index=training_conf.fold_index,
+                task_number=training_conf.task_number
             )
             
             # Submit job to Singularity via sbatch
-            job_id = self.model_training_facade.submit_training_job(training_variables)
+            sbatch_job_id = self.model_training_facade.submit_training_job(training_variables)
 
+            # Create job record first
+            job_record = JobRecord(
+                sbatch_id=sbatch_job_id,
+                fold_index=training_conf.fold_index,
+                task_number=training_conf.task_number,
+                status='PENDING'
+            )
+            job_record = self.job_dao.create(job_record)
+
+            # Create training record with reference to job
             training_record = TrainingRecord(
                 name=training_conf.model_name,
                 images_path=training_conf.images_path,
                 labels_path=training_conf.labels_path,
-                job_id = job_id,
+                job_id=job_record,
                 status='TRAINING',
                 progress=0.0,
-                batch_job_id= job_id,
                 start_time=datetime.now()
             )
 
@@ -75,14 +86,14 @@ class TrainingBL:
             )
 
             self.logger.info(
-                f"Training job submitted - Training ID: {training_record.id}, Job ID: {job_id}",
-                extra={'training_id': str(training_record.id), 'job_id': job_id}
+                f"Training job submitted - Training ID: {training_record.id}, Job ID: {sbatch_job_id}",
+                extra={'training_id': str(training_record.id), 'job_id': sbatch_job_id}
             )
             
             return {
                 "message": "Training started.",
                 "trainingId": str(training_record.id),
-                "batchJobId": job_id
+                "batchJobId": sbatch_job_id
             }
             
         except Exception as e:

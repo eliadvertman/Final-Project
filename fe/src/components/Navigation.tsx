@@ -7,7 +7,7 @@ const Navigation: React.FC = () => {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: '📊' },
     { path: '/train', label: 'Train Model', icon: '🎯' },
-    { path: '/models', label: 'Model Management', icon: '🤖' },
+    { path: '/models', label: 'Models', icon: '🤖' },
     { path: '/predict', label: 'Make Prediction', icon: '🔮' },
     { path: '/history', label: 'Prediction History', icon: '📋' },
   ];

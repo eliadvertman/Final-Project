@@ -1,6 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services';
-import type { TrainingConfig } from '../types';
 
 // Query keys
 const QUERY_KEYS = {
@@ -22,20 +21,5 @@ export const useModelStatus = (modelId: string, enabled = true) => {
     queryFn: () => api.models.getModelStatus(modelId),
     refetchInterval: 2000, // More frequent updates for status
     enabled: enabled && !!modelId,
-  });
-};
-
-export const useTrainModel = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (config: TrainingConfig) => api.models.trainModel(config),
-    onSuccess: () => {
-      // Invalidate models list to show new model
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MODELS });
-    },
-    onError: (error) => {
-      console.error('Training failed:', error);
-    },
   });
 };

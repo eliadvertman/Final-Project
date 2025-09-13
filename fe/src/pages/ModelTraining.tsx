@@ -13,7 +13,8 @@ const ModelTraining: React.FC = () => {
     modelName: '',
     imagesPath: '',
     labelsPath: '',
-    datasetPath: '',
+    foldIndex: undefined,
+    taskNumber: undefined,
   });
 
   const [notification, setNotification] = useState<NotificationState>({
@@ -34,10 +35,21 @@ const ModelTraining: React.FC = () => {
   }, [notification]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    let processedValue: string | number | undefined = value;
+
+    // Handle number inputs
+    if (type === 'number') {
+      if (value === '') {
+        processedValue = undefined;
+      } else {
+        processedValue = parseInt(value, 10);
+      }
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: processedValue
     }));
     // Clear any existing notifications when user starts typing
     if (notification.type) {
@@ -71,7 +83,8 @@ const ModelTraining: React.FC = () => {
         modelName: '',
         imagesPath: '',
         labelsPath: '',
-        datasetPath: '',
+        foldIndex: undefined,
+        taskNumber: undefined,
       });
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to start training';
@@ -207,12 +220,12 @@ const ModelTraining: React.FC = () => {
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-            Dataset Path
+            Fold Index
           </label>
           <input
-            type="text"
-            name="datasetPath"
-            value={formData.datasetPath}
+            type="number"
+            name="foldIndex"
+            value={formData.foldIndex || ''}
             onChange={handleInputChange}
             style={{
               width: '100%',
@@ -221,7 +234,29 @@ const ModelTraining: React.FC = () => {
               borderRadius: '4px',
               fontSize: '14px'
             }}
-            placeholder="/path/to/dataset"
+            placeholder="Enter fold index for cross-validation"
+            min="0"
+          />
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+            Task Number
+          </label>
+          <input
+            type="number"
+            name="taskNumber"
+            value={formData.taskNumber || ''}
+            onChange={handleInputChange}
+            style={{
+              width: '100%',
+              padding: '8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}
+            placeholder="Enter task number for SLURM job identification"
+            min="0"
           />
         </div>
 

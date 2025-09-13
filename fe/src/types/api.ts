@@ -4,7 +4,8 @@ export interface TrainingConfig {
   modelName: string;
   imagesPath?: string;
   labelsPath?: string;
-  datasetPath?: string;
+  foldIndex?: number;
+  taskNumber?: number;
 }
 
 export interface ModelStatus {

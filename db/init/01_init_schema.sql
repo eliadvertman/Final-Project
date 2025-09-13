@@ -1,10 +1,21 @@
 -- Create Training table
+CREATE TABLE IF NOT EXISTS jobs (
+    id VARCHAR(36) PRIMARY KEY,
+    sbatch_id VARCHAR(255) NOT NULL,
+    fold_index NUMERIC(4) NOT NULL,
+    task_number NUMERIC(4) NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')),
+    start_time TIMESTAMP WITH TIME ZONE,
+    end_time TIMESTAMP WITH TIME ZONE
+);
+
+-- Create Training table
 CREATE TABLE IF NOT EXISTS training (
     id VARCHAR(36) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     images_path VARCHAR(500),
     labels_path VARCHAR(500),
-    job_id VARCHAR(36) NOT NULL,
+    job_id VARCHAR(36) NOT NULL REFERENCES jobs(id),
     status VARCHAR(20) NOT NULL CHECK (status IN ('TRAINING', 'TRAINED', 'FAILED')),
     progress REAL DEFAULT 0.0,
     start_time TIMESTAMP WITH TIME ZONE,

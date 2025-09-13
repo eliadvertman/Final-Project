@@ -11,8 +11,9 @@ class TrainingDAO:
         pass
     
     def create(self, training_record: TrainingRecord) -> TrainingRecord:
-        """Create a new model record."""
-        return training_record.save(force_insert=True)
+        """Create a new training record."""
+        training_record.save(force_insert=True)
+        return training_record
     
     
     def get_by_id(self, training_uuid: uuid.UUID) -> Optional[TrainingRecord]:
@@ -63,3 +64,8 @@ class TrainingDAO:
     def count(self) -> int:
         """Get total count of trainings."""
         return TrainingRecord.select().count()
+    
+    def get_job_for_training(self, training_uuid: uuid.UUID) -> Optional['JobRecord']:
+        """Get the job record associated with a training."""
+        training = self.get_by_id(training_uuid)
+        return training.job_id if training else None

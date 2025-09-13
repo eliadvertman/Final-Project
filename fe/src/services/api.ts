@@ -40,13 +40,7 @@ apiClient.interceptors.response.use(
 );
 
 export const modelApi = {
-  // Train a new model
-  trainModel: async (config: TrainingConfig): Promise<TrainingResponse> => {
-    const response: AxiosResponse<TrainingResponse> = await apiClient.post('/model/train', config);
-    return response.data;
-  },
-
-  // Get model training status
+  // Get model status
   getModelStatus: async (modelId: string): Promise<ModelStatus> => {
     const response: AxiosResponse<ModelStatus> = await apiClient.get(`/model/${modelId}/status`);
     return response.data;
@@ -55,6 +49,28 @@ export const modelApi = {
   // List all models
   listModels: async (limit = 10, offset = 0): Promise<ModelSummary[]> => {
     const response: AxiosResponse<ModelSummary[]> = await apiClient.get('/model/list', {
+      params: { limit, offset }
+    });
+    return response.data;
+  },
+};
+
+export const trainingApi = {
+  // Train a new model
+  trainModel: async (config: TrainingConfig): Promise<TrainingResponse> => {
+    const response: AxiosResponse<TrainingResponse> = await apiClient.post('/training/train', config);
+    return response.data;
+  },
+
+  // Get training status
+  getTrainingStatus: async (trainingId: string): Promise<ModelStatus> => {
+    const response: AxiosResponse<ModelStatus> = await apiClient.get(`/training/${trainingId}/status`);
+    return response.data;
+  },
+
+  // List all trainings
+  listTrainings: async (limit = 10, offset = 0): Promise<ModelSummary[]> => {
+    const response: AxiosResponse<ModelSummary[]> = await apiClient.get('/training/list', {
       params: { limit, offset }
     });
     return response.data;
@@ -86,6 +102,7 @@ export const predictionApi = {
 // Combined API object for easier imports
 export const api = {
   models: modelApi,
+  training: trainingApi,
   predictions: predictionApi,
 };
 
