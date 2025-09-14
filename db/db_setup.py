@@ -105,7 +105,7 @@ def run_sql_file(cursor, sql_file_path):
 
 def cleanup_tables(cursor):
     """Drop existing tables in reverse dependency order."""
-    tables_to_drop = ['inference', 'model', 'training']
+    tables_to_drop = ['inference', 'model', 'training', 'jobs']
     
     logger.info("Starting table cleanup...")
     for table_name in tables_to_drop:

@@ -7,6 +7,7 @@ from stroke_seg.controller import model_bp, prediction_bp
 from stroke_seg.controller.training_controller import training_bp
 from stroke_seg.dao.database import get_pool_status, verify_connection, database
 from stroke_seg.logging_config import setup_logging, get_logger, add_request_id_to_request, log_request_info
+from stroke_seg.training.poller_facade import PollerFacade
 
 app = Flask(__name__)
 CORS(app)
@@ -15,11 +16,21 @@ CORS(app)
 setup_logging('pic_service')
 logger = get_logger(__name__)
 
+# Initialize job poller facade
+poller_facade = PollerFacade()
+
 # Verify database connection and create tables on startup
 if verify_connection():
     logger.info("Database connection verified")
 else:
     logger.error("Failed to connect to database - application may not work properly")
+
+# Start job poller
+try:
+    poller_facade.start()
+    logger.info("Job poller started successfully")
+except Exception as e:
+    logger.error(f"Failed to start job poller: {str(e)}")
 
 # Register blueprints
 app.register_blueprint(training_bp)
@@ -62,6 +73,60 @@ def db_health():
         logger.error(f"Database health check failed: {str(e)}", exc_info=True)
         return jsonify({
             "status": "unhealthy", 
+            "error": str(e)
+        }), 500
+
+@app.route('/health/poller')
+def poller_health():
+    """Job poller health check endpoint."""
+    try:
+        logger.debug("Checking job poller health")
+        poller_status = poller_facade.get_status()
+        
+        is_healthy = poller_status.get('facade_running', False) and poller_status.get('poller_status', {}).get('is_running', False)
+        
+        logger.info(f"Poller health check - Running: {is_healthy}")
+        
+        return jsonify({
+            "status": "healthy" if is_healthy else "unhealthy",
+            "poller": poller_status
+        }), 200 if is_healthy else 503
+        
+    except Exception as e:
+        logger.error(f"Poller health check failed: {str(e)}", exc_info=True)
+        return jsonify({
+            "status": "unhealthy",
+            "error": str(e)
+        }), 500
+
+@app.route('/health')
+def overall_health():
+    """Overall application health check endpoint."""
+    try:
+        # Check database
+        db_healthy = True
+        try:
+            get_pool_status()
+        except Exception:
+            db_healthy = False
+        
+        # Check poller
+        poller_healthy = poller_facade.is_running
+        
+        overall_healthy = db_healthy and poller_healthy
+        
+        return jsonify({
+            "status": "healthy" if overall_healthy else "unhealthy",
+            "components": {
+                "database": "healthy" if db_healthy else "unhealthy",
+                "poller": "healthy" if poller_healthy else "unhealthy"
+            }
+        }), 200 if overall_healthy else 503
+        
+    except Exception as e:
+        logger.error(f"Overall health check failed: {str(e)}", exc_info=True)
+        return jsonify({
+            "status": "unhealthy",
             "error": str(e)
         }), 500
 

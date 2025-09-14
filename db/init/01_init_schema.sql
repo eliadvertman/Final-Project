@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     task_number NUMERIC(4) NOT NULL,
     status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')),
     start_time TIMESTAMP WITH TIME ZONE,
-    end_time TIMESTAMP WITH TIME ZONE
+    end_time TIMESTAMP WITH TIME ZONE,
+    error_message TEXT
 );
 
 -- Create Training table
@@ -19,8 +20,7 @@ CREATE TABLE IF NOT EXISTS training (
     status VARCHAR(20) NOT NULL CHECK (status IN ('TRAINING', 'TRAINED', 'FAILED')),
     progress REAL DEFAULT 0.0,
     start_time TIMESTAMP WITH TIME ZONE,
-    end_time TIMESTAMP WITH TIME ZONE,
-    error_message TEXT
+    end_time TIMESTAMP WITH TIME ZONE
 );
 
 
