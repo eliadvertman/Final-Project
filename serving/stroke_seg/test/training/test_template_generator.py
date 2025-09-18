@@ -8,7 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from stroke_seg.exceptions import ModelCreationException
-from stroke_seg.training import TemplateGenerator, SbatchTemplateVariables
+from stroke_seg.bl.training import TemplateGenerator, TrainingTemplateVariables
 
 
 class TestTemplateGenerator:
@@ -22,7 +22,7 @@ class TestTemplateGenerator:
         expected_fold_index = 1
         expected_task_num = 130
 
-        test_variables = SbatchTemplateVariables(
+        test_variables = TrainingTemplateVariables(
             model_name=model_name,
             fold_index = expected_fold_index,
             task_number= expected_task_num,
@@ -33,7 +33,7 @@ class TestTemplateGenerator:
         generator = TemplateGenerator()
         
         # Generate sbatch content
-        result = generator.generate_sbatch_content(test_variables)
+        result = generator.generate_training_sbatch_content(test_variables)
         
         # Define expected sbatch content with interpolated values
         with open('C:\\Users\\Eliad\\Documents\\Final Project\\Final Project\\project\\Final-Project\\serving\\stroke_seg\\test\\resources\\expected_sbatch_train', 'r', encoding='utf-8') as file:
@@ -70,7 +70,7 @@ class TestTemplateGenerator:
         with patch.object(TemplateGenerator, '_load_template', return_value=test_template_content):
             generator = TemplateGenerator()
             
-            variables = SbatchTemplateVariables(
+            variables = TrainingTemplateVariables(
                 model_name="test_model",
                 fold_index=2,
                 task_number=150,
@@ -89,7 +89,7 @@ class TestTemplateGenerator:
         with patch.object(TemplateGenerator, '_load_template', return_value=test_template_content):
             generator = TemplateGenerator()
             
-            variables = SbatchTemplateVariables(
+            variables = TrainingTemplateVariables(
                 model_name="test_model",
                 fold_index=3,
                 task_number=200,
@@ -108,14 +108,14 @@ class TestTemplateGenerator:
         with patch.object(TemplateGenerator, '_load_template', return_value=test_template_content):
             generator = TemplateGenerator()
             
-            variables = SbatchTemplateVariables(
+            variables = TrainingTemplateVariables(
                 model_name="neural_net",
                 fold_index=4,
                 task_number=250,
                 timestamp=9876543210
             )
             
-            result = generator.generate_sbatch_content(variables)
+            result = generator.generate_training_sbatch_content(variables)
             
             expected = "#!/bin/bash\n#SBATCH --job-name=neural_net-9876543210\nsingularity run --env fold_index=4 --env task_number=250\necho 'Training neural_net'"
             assert result == expected
@@ -130,7 +130,7 @@ class TestTemplateGenerator:
         try:
             generator = TemplateGenerator(template_path=temp_path)
             
-            variables = SbatchTemplateVariables(
+            variables = TrainingTemplateVariables(
                 model_name="custom_model",
                 fold_index=5,
                 task_number=300,
@@ -147,25 +147,25 @@ class TestTemplateGenerator:
     def test_template_validation_empty_strings(self):
         """Test that SbatchTemplateVariables validates against empty strings and invalid integers."""
         with pytest.raises(ValueError) as exc_info:
-            SbatchTemplateVariables(model_name="", fold_index=1, task_number=100, timestamp=1234567890)
+            TrainingTemplateVariables(model_name="", fold_index=1, task_number=100, timestamp=1234567890)
         
         assert "model_name must be a non-empty string" in str(exc_info.value)
         
         # Test fold_index validation (0 is considered falsy and should fail)
         with pytest.raises(ValueError) as exc_info:
-            SbatchTemplateVariables(model_name="valid_name", fold_index=0, task_number=100, timestamp=1234567890)
+            TrainingTemplateVariables(model_name="valid_name", fold_index=0, task_number=100, timestamp=1234567890)
         
         assert "fold_index must be a non-empty string" in str(exc_info.value)
         
         # Test task_number validation (0 is considered falsy and should fail)
         with pytest.raises(ValueError) as exc_info:
-            SbatchTemplateVariables(model_name="valid_name", fold_index=1, task_number=0, timestamp=1234567890)
+            TrainingTemplateVariables(model_name="valid_name", fold_index=1, task_number=0, timestamp=1234567890)
         
         assert "task_number must be a non-empty string" in str(exc_info.value)
     
     def test_template_variables_to_dict(self):
         """Test SbatchTemplateVariables to_dict method."""
-        variables = SbatchTemplateVariables(
+        variables = TrainingTemplateVariables(
             model_name="test_model",
             fold_index=6,
             task_number=400,

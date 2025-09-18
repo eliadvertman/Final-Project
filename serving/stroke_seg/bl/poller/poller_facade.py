@@ -6,7 +6,7 @@ import threading
 from typing import Optional
 
 from stroke_seg.logging_config import get_logger
-from stroke_seg.training.job_monitor import JobsMonitor
+from stroke_seg.bl.poller.job_monitor import JobsMonitor
 
 
 class PollerFacade:

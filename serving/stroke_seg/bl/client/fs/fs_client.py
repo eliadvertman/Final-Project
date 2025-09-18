@@ -45,3 +45,21 @@ def cleanup_file(file_path: str) -> None:
         logger.debug(f"Cleaned up file: {file_path}")
     except Exception as e:
         logger.warning(f"Failed to cleanup file {file_path}: {str(e)}")
+
+def create_dir(directory_path: str) -> None:
+    """
+    Create a directory and all necessary parent directories.
+
+    Args:
+        directory_path: Path to the directory to create
+
+    Raises:
+        Exception: If directory creation fails
+    """
+    try:
+        os.makedirs(directory_path, exist_ok=True)
+        logger.debug(f"Directory created: {directory_path}")
+    except Exception as e:
+        error_msg = f"Failed to create directory {directory_path}: {str(e)}"
+        logger.error(error_msg)
+        raise

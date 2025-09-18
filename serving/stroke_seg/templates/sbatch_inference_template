@@ -1,0 +1,20 @@
+#!/bin/bash
+## resource allocation
+
+#SBATCH --chdir=/home/veeliad/work/inference
+
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=64g
+#SBATCH --gres=gpu:a100:1
+#SBATCH --qos=gpu
+
+
+#SBATCH --job-name={model_name}-{timestamp}-inference
+#SBATCH --output=%x-%j.out  # %x => job-name, %j => jobid
+#SBATCH --error=%x-%j.err
+
+
+## run time
+singularity run  --fakeroot --overlay /home/veeliad/work/TEST/overlay --nv --env device=cuda  --pwd /stroke_segmentation --mount type=bind,source={output_path},destination=/output --mount type=bind,source={model_path},destination=/stroke_segmentation/model inference_big_lesions_generic_all_folds.sif
+

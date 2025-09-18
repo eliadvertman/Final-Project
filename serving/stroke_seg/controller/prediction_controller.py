@@ -2,7 +2,7 @@
 
 from flask import Blueprint, request, jsonify
 
-from stroke_seg.bl.inference_bl import InferenceBL
+from stroke_seg.bl.prediction.inference_bl import InferenceBL
 from stroke_seg.controller.models import InferenceInput
 from stroke_seg.error_handler import handle_errors
 from stroke_seg.logging_config import get_logger

@@ -6,8 +6,8 @@ from datetime import datetime
 
 from stroke_seg.logging_config import get_logger
 from stroke_seg.exceptions import ModelCreationException
-from .bash_client import BashClient
-from .fs_client import create_temp_file, cleanup_file
+from stroke_seg.bl.client.bash.bash_client import BashClient
+from stroke_seg.bl.client.fs.fs_client import create_temp_file, cleanup_file
 from .slurm_parser import parse_scontrol_output, extract_job_summary
 
 

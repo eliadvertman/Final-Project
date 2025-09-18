@@ -25,18 +25,17 @@ class ModelBL:
         self.model_dao = ModelDAO()
         self.logger = get_logger(__name__)
     
-    def create_model(self, training_id: str, model_name: str, model_path: str = None) -> Dict[str, Any]:
+    def create_model(self, training_id: str, model_name: str) -> Dict[str, Any]:
         """
         Create a new model record linked to a training.
-        
+
         Args:
             training_id: UUID string of the associated training
             model_name: Name for the model
-            model_path: Optional path to the trained model file
-            
+
         Returns:
             Dict containing success message and model ID
-            
+
         Raises:
             InvalidUUIDException: If training ID format is invalid
             ModelCreationException: If model creation fails due to server error
@@ -58,7 +57,6 @@ class ModelBL:
             model_record = ModelRecord(
                 training_id=training_record,
                 model_name=model_name,
-                model_path=model_path,
                 created_at=datetime.now()
             )
             
@@ -122,17 +120,15 @@ class ModelBL:
         response = {
             "modelId": str(model_record.id),
             "modelName": model_record.model_name,
-            "modelPath": model_record.model_path,
-            "trainingId": str(training_record.id),
-            "trainingStatus": training_record.status,
+            "status": training_record.status,
             "progress": training_record.progress,
             "createdAt": model_record.created_at.isoformat() + 'Z' if model_record.created_at else None
         }
         
         if training_record.start_time:
-            response["trainingStartTime"] = training_record.start_time.isoformat() + 'Z'
+            response["startTime"] = training_record.start_time.isoformat() + 'Z'
         if training_record.end_time:
-            response["trainingEndTime"] = training_record.end_time.isoformat() + 'Z'
+            response["endTime"] = training_record.end_time.isoformat() + 'Z'
         if training_record.error_message:
             response["errorMessage"] = training_record.error_message
             
@@ -171,9 +167,8 @@ class ModelBL:
                 response.append({
                     "modelId": str(model.id),
                     "modelName": model.model_name,
-                    "trainingStatus": model.training_id.status,  # Get status from training record
-                    "createdAt": model.created_at.isoformat() + 'Z' if model.created_at else None,
-                    "modelPath": model.model_path
+                    "status": model.training_id.status,  # Fix: Use 'status' instead of 'trainingStatus'
+                    "createdAt": model.created_at.isoformat() + 'Z' if model.created_at else None
                 })
             
             self.logger.info(f"Models listed successfully - Count: {len(response)}, Limit: {limit}, Offset: {offset}")

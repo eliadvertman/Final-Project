@@ -9,6 +9,7 @@ import type {
   PredictionStatus,
   PredictionSummary,
   TrainingResponse,
+  TrainingSummary,
 } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
@@ -69,8 +70,8 @@ export const trainingApi = {
   },
 
   // List all trainings
-  listTrainings: async (limit = 10, offset = 0): Promise<ModelSummary[]> => {
-    const response: AxiosResponse<ModelSummary[]> = await apiClient.get('/training/list', {
+  listTrainings: async (limit = 10, offset = 0): Promise<TrainingSummary[]> => {
+    const response: AxiosResponse<TrainingSummary[]> = await apiClient.get('/training/list', {
       params: { limit, offset }
     });
     return response.data;

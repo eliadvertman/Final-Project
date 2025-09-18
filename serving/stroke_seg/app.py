@@ -6,8 +6,9 @@ from flask_cors import CORS
 from stroke_seg.controller import model_bp, prediction_bp
 from stroke_seg.controller.training_controller import training_bp
 from stroke_seg.dao.database import get_pool_status, verify_connection, database
+from stroke_seg.config import validate_template_files
 from stroke_seg.logging_config import setup_logging, get_logger, add_request_id_to_request, log_request_info
-from stroke_seg.training.poller_facade import PollerFacade
+from stroke_seg.bl.poller.poller_facade import PollerFacade
 
 app = Flask(__name__)
 CORS(app)
@@ -24,6 +25,18 @@ if verify_connection():
     logger.info("Database connection verified")
 else:
     logger.error("Failed to connect to database - application may not work properly")
+
+# Validate template files on startup
+try:
+    validate_template_files()
+    logger.info("Template files validation successful")
+except FileNotFoundError as e:
+    logger.error(f"Template files validation failed: {str(e)}")
+    logger.error("Application startup failed - missing required template files")
+    exit(1)
+except Exception as e:
+    logger.error(f"Unexpected error during template validation: {str(e)}")
+    exit(1)
 
 # Start job poller
 try:

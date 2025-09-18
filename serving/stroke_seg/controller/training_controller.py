@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify
 from pydantic import ValidationError
 
-from stroke_seg.bl.training_bl import TrainingBL
+from stroke_seg.bl.training.training_bl import TrainingBL
 from stroke_seg.controller.models import TrainingConfig
 from stroke_seg.error_handler import handle_errors
 from stroke_seg.logging_config import get_logger

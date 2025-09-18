@@ -5,9 +5,14 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 from stroke_seg.controller.models import InferenceInput
+from stroke_seg.config import inference_template_path
 from stroke_seg.dao.inference_dao import InferenceDAO
 from stroke_seg.dao.model_dao import ModelDAO
-from stroke_seg.dao.models import InferenceRecord, ModelRecord
+from stroke_seg.dao.job_dao import JobDAO
+from stroke_seg.dao.models import InferenceRecord, ModelRecord, JobRecord
+from stroke_seg.bl.jobs import JobType
+from .prediction_facade import PredictionFacade
+from stroke_seg.bl.template.template_variables import PredictionTemplateVariables
 from stroke_seg.exceptions import (
     ModelNotFoundException,
     PredictionNotFoundException,
@@ -24,6 +29,8 @@ class InferenceBL:
         """Initialize the business logic layer with DAOs."""
         self.inference_dao = InferenceDAO()
         self.model_dao = ModelDAO()
+        self.job_dao = JobDAO()
+        self.prediction_facade = PredictionFacade(inference_template_path)
     
     def make_prediction(self, inference_input : InferenceInput) -> Dict[str, Any]:
         """
@@ -51,25 +58,43 @@ class InferenceBL:
         if not model_record:
             raise ModelNotFoundException(str(model_uuid))
 
-        # Mock prediction logic
-        prediction_result = {"result": "mock_prediction", "confidence": 0.95}
-        
         try:
+            # Prepare variables for sbatch template
+            prediction_variables = PredictionTemplateVariables(
+                model_name=model_record.model_name,
+                model_path=model_record.training_id.model_path,
+                output_path=inference_input.input_path
+            )
+
+            # Submit job to Singularity via sbatch
+            sbatch_job_id = self.prediction_facade.submit_prediction_job(prediction_variables)
+
+            # Create job record first
+            job_record = JobRecord(
+                sbatch_id=sbatch_job_id,
+                fold_index=0,
+                task_number=0,
+                job_type=JobType.INFERENCE.value,
+                status='PENDING'
+            )
+            job_record = self.job_dao.create(job_record)
+
+            # Create inference record with reference to job
             inference_record = InferenceRecord(
                 model_id=model_record,
                 input_data=inference_input.input_path,
-                prediction=prediction_result,
-                status='COMPLETED',
+                prediction=None,
+                status='PENDING',
                 start_time=datetime.now(),
-                end_time=datetime.now()
+                job_id=job_record
             )
-            
+
             self.inference_dao.create(inference_record)
-            
+
             return {
                 "predictId": str(inference_record.predict_id),
-                "prediction": prediction_result,
                 "modelId": str(model_record.id),
+                "batchJobId": sbatch_job_id,
                 "timestamp": inference_record.created_at.isoformat() + 'Z'
             }
             

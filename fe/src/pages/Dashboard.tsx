@@ -1,9 +1,9 @@
 import React from 'react';
-import { useModels, usePredictions } from '../hooks';
+import { useTrainedModels, usePredictions } from '../hooks';
 import { formatDate } from '../utils/dateUtils';
 
 const Dashboard: React.FC = () => {
-  const { data: models, isLoading: modelsLoading } = useModels();
+  const { data: models, isLoading: modelsLoading } = useTrainedModels();
   const { data: predictions, isLoading: predictionsLoading } = usePredictions();
 
   return (

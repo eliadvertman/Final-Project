@@ -1,13 +1,17 @@
 """Business logic layer for training management operations."""
-
+import time
+import traceback
 import uuid
 from datetime import datetime
 from typing import List, Dict, Any
 
-from stroke_seg.dao.training_dao import TrainingDAO
+from stroke_seg.bl.training import TrainingTemplateVariables
+from stroke_seg.bl.training.training_facade import ModelTrainingFacade
+from stroke_seg.config import models_base_path, training_template_path
+from stroke_seg.controller.models import TrainingConfig
 from stroke_seg.dao.job_dao import JobDAO
 from stroke_seg.dao.models import TrainingRecord, JobRecord
-from stroke_seg.controller.models import TrainingConfig
+from stroke_seg.dao.training_dao import TrainingDAO
 from stroke_seg.exceptions import (
     ModelNotFoundException,
     InvalidUUIDException,
@@ -17,8 +21,6 @@ from stroke_seg.exceptions import (
     DatabaseConnectionException
 )
 from stroke_seg.logging_config import get_logger
-from stroke_seg.training import SbatchTemplateVariables
-from stroke_seg.training.training_facade import ModelTrainingFacade
 
 
 class TrainingBL:
@@ -28,7 +30,7 @@ class TrainingBL:
         """Initialize the business logic layer with DAO and Singularity interface."""
         self.training_dao = TrainingDAO()
         self.job_dao = JobDAO()
-        self.model_training_facade = ModelTrainingFacade()
+        self.model_training_facade = ModelTrainingFacade(training_template_path)
         self.logger = get_logger(__name__)
     
     def train_model(self, training_conf: TrainingConfig) -> Dict[str, Any]:
@@ -46,11 +48,13 @@ class TrainingBL:
             DatabaseConnectionException: If database connection fails
         """
         self.logger.info(f"Starting training - Name: {training_conf.model_name}")
+        model_path = f"{models_base_path}/{training_conf.model_name}/{time.time()}"
         
         try:
             # Prepare variables for sbatch template
-            training_variables = SbatchTemplateVariables(
+            training_variables = TrainingTemplateVariables(
                 model_name=training_conf.model_name,
+                model_path=model_path,
                 fold_index=training_conf.fold_index,
                 task_number=training_conf.task_number
             )
@@ -63,6 +67,7 @@ class TrainingBL:
                 sbatch_id=sbatch_job_id,
                 fold_index=training_conf.fold_index,
                 task_number=training_conf.task_number,
+                job_type= 'TRAINING',
                 status='PENDING'
             )
             job_record = self.job_dao.create(job_record)
@@ -72,6 +77,7 @@ class TrainingBL:
                 name=training_conf.model_name,
                 images_path=training_conf.images_path,
                 labels_path=training_conf.labels_path,
+                model_path=model_path,
                 job_id=job_record,
                 status='TRAINING',
                 progress=0.0,
@@ -99,10 +105,12 @@ class TrainingBL:
         except Exception as e:
             error_msg = str(e).lower()
             self.logger.error(f"Training failed - Name: {training_conf.model_name}, Error: {str(e)}")
+            self.logger.error(traceback.format_exc())
 
             if "connection" in error_msg or "connect" in error_msg:
                 raise DatabaseConnectionException(f"Database connection failed: {str(e)}")
             else:
+
                 raise ModelCreationException(f"Failed to create training: {str(e)}")
     
     def get_training_status(self, training_id: str) -> Dict[str, Any]:

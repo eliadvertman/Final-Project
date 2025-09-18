@@ -1,15 +1,15 @@
 """Singularity interface facade for model training operations."""
-
+from stroke_seg.bl.client.slurm.slurm_client import SlurmClient
+from stroke_seg.bl.client.fs.fs_client import create_dir
 from stroke_seg.logging_config import get_logger
-from stroke_seg.exceptions import ModelCreationException
-from .template_generator import TemplateGenerator
-from .sbatch_client import SbatchClient
-from .template_variables import SbatchTemplateVariables
+from stroke_seg.bl.template.template_generator import TemplateGenerator
+
+from stroke_seg.bl.template.template_variables import TrainingTemplateVariables
 
 
 class ModelTrainingFacade:
     """Facade interface for interacting with Singularity for model training."""
-    
+
     def __init__(self, template_path: str = None):
         """
         Initialize the Singularity interface.
@@ -19,9 +19,9 @@ class ModelTrainingFacade:
         """
         self.logger = get_logger(__name__)
         self.template_generator = TemplateGenerator(template_path)
-        self.sbatch_client = SbatchClient()
+        self.sbatch_client = SlurmClient()
         
-    def submit_training_job(self, training_variables: SbatchTemplateVariables) -> str:
+    def submit_training_job(self, training_variables: TrainingTemplateVariables) -> str:
         """
         Submit a training job using sbatch.
         
@@ -40,8 +40,11 @@ class ModelTrainingFacade:
         )
         
         try:
+            # Create model_path directory
+            create_dir(training_variables.model_path)
+
             # Generate sbatch content using template generator
-            sbatch_content = self.template_generator.generate_sbatch_content(training_variables)
+            sbatch_content = self.template_generator.generate_training_sbatch_content(training_variables)
             
             # Submit job using sbatch client
             job_id = self.sbatch_client.submit_sbatch_job(sbatch_content)

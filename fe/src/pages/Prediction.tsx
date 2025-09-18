@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useModels, useMakePrediction } from '../hooks';
+import { useTrainedModels, useMakePrediction } from '../hooks';
 import type { PredictionRequest } from '../types';
 
 interface NotificationState {
@@ -16,11 +16,11 @@ const Prediction: React.FC = () => {
     message: '',
   });
   
-  const { data: models, isLoading: modelsLoading } = useModels();
+  const { data: models, isLoading: modelsLoading } = useTrainedModels();
   const makePredictionMutation = useMakePrediction();
 
   // Filter only trained models for predictions
-  const trainedModels = models?.filter(model => model.status === 'TRAINED') || [];
+  const trainedModels = models?.filter(model => model.trainingStatus === 'TRAINED') || [];
 
   // Auto-dismiss success notifications after 7 seconds (longer for prediction results)
   useEffect(() => {

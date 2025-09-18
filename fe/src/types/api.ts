@@ -20,7 +20,9 @@ export interface ModelStatus {
 export interface ModelSummary {
   modelId: string;
   modelName: string;
+  modelPath: string;
   status: 'PENDING' | 'TRAINING' | 'TRAINED' | 'FAILED' | 'DEPLOYED';
+  trainingStatus: 'PENDING' | 'TRAINING' | 'TRAINED' | 'FAILED' | 'DEPLOYED';
   createdAt: string;
 }
 
@@ -60,6 +62,13 @@ export interface ApiError {
 export interface TrainingResponse {
   message: string;
   modelId: string;
+}
+
+export interface TrainingSummary {
+  trainingId: string;
+  trainingName: string;
+  status: 'PENDING' | 'TRAINING' | 'TRAINED' | 'FAILED';
+  createdAt: string;
 }
 
 // API Response types for list endpoints

@@ -40,6 +40,13 @@ class TrainingDAO:
     def get_by_status(self, status: str) -> List[TrainingRecord]:
         """Get all trainings with a specific status."""
         return list(TrainingRecord.select().where(TrainingRecord.status == status))
+
+    def get_by_job_id(self, job_uuid: uuid.UUID) -> Optional[TrainingRecord]:
+        """Get a training by its job_id."""
+        try:
+            return TrainingRecord.get(TrainingRecord.job_id == str(job_uuid))
+        except DoesNotExist:
+            return None
     
     def update(self, training_uuid: uuid.UUID, **kwargs) -> Optional[TrainingRecord]:
         """Update a training record."""
