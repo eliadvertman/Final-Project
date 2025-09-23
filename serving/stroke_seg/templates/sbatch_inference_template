@@ -16,5 +16,5 @@
 
 
 ## run time
-singularity run  --fakeroot --overlay /home/veeliad/work/TEST/overlay --nv --env device=cuda  --pwd /stroke_segmentation --mount type=bind,source={output_path},destination=/output --mount type=bind,source={model_path},destination=/stroke_segmentation/model inference_big_lesions_generic_all_folds.sif
+singularity run  --fakeroot --overlay /home/veeliad/work/TEST/overlay --nv --env device=cuda --env fold_index={fold_index} --pwd /stroke_segmentation --mount type=bind,source={output_path},destination=/output --mount type=bind,source={model_path},destination=/stroke_segmentation/model inference_big_lesions_generic.sif
 

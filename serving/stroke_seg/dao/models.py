@@ -11,12 +11,12 @@ class JobRecord(BaseModel):
     id = CharField(primary_key=True, max_length=36, default=lambda: str(uuid.uuid4()))
     sbatch_id = CharField(max_length=255, null=False)
     fold_index = DecimalField(max_digits=4, decimal_places=0, null=False)
-    task_number = DecimalField(max_digits=4, decimal_places=0, null=False)
     job_type = CharField(max_length=20, null=False, constraints=[Check("job_type IN ('INFERENCE', 'TRAINING')")])
     status = CharField(max_length=20, null=False, constraints=[Check("status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')")])
     start_time = DateTimeField(null=True)
     end_time = DateTimeField(null=True)
     error_message = TextField(null=True)
+    sbatch_content = TextField(null=True)
     
     class Meta:
         table_name = 'jobs'
@@ -56,6 +56,7 @@ class InferenceRecord(BaseModel):
     model_id = ForeignKeyField(ModelRecord, field='id', backref='inferences', null=False)
     job_id = ForeignKeyField(JobRecord, field='id', backref='inference', null=True)
     input_data = BinaryJSONField(null=False)
+    output_dir = CharField(max_length=500, null=True)
     prediction = BinaryJSONField(null=True)
     status = CharField(max_length=20, null=False, constraints=[Check("status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')")])
     start_time = DateTimeField(null=True)

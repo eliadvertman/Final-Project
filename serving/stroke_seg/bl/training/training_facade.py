@@ -21,16 +21,16 @@ class ModelTrainingFacade:
         self.template_generator = TemplateGenerator(template_path)
         self.sbatch_client = SlurmClient()
         
-    def submit_training_job(self, training_variables: TrainingTemplateVariables) -> str:
+    def submit_training_job(self, training_variables: TrainingTemplateVariables) -> tuple[str, str]:
         """
         Submit a training job using sbatch.
-        
+
         Args:
             training_variables: Template variables dataclass containing model_name and model_id
-            
+
         Returns:
-            Batch job ID as string
-            
+            Tuple of (batch_job_id, sbatch_content) as strings
+
         Raises:
             ModelCreationException: If job submission fails at any step
         """
@@ -48,9 +48,9 @@ class ModelTrainingFacade:
             
             # Submit job using sbatch client
             job_id = self.sbatch_client.submit_sbatch_job(sbatch_content)
-            
+
             self.logger.info(f"Training job submitted successfully - Job ID: {job_id}")
-            return job_id
+            return job_id, sbatch_content
             
         except Exception as e:
             self.logger.error(f"Failed to submit training job: {str(e)}")

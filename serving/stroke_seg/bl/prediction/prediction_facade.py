@@ -5,6 +5,8 @@ from stroke_seg.bl.template.template_generator import TemplateGenerator
 from stroke_seg.bl.client.slurm.slurm_client import SlurmClient
 from stroke_seg.bl.template.template_variables import PredictionTemplateVariables
 
+from stroke_seg.bl.client.fs.fs_client import create_dir
+
 
 class PredictionFacade:
     """Facade interface for interacting with Singularity for predictions."""
@@ -20,7 +22,7 @@ class PredictionFacade:
         self.template_generator = TemplateGenerator(template_path)
         self.slurm_client = SlurmClient()
 
-    def submit_prediction_job(self, prediction_variables: PredictionTemplateVariables) -> str:
+    def submit_prediction_job(self, prediction_variables: PredictionTemplateVariables) -> tuple[str, str]:
         """
         Submit a prediction job using sbatch.
 
@@ -28,7 +30,7 @@ class PredictionFacade:
             prediction_variables: Template variables dataclass containing model_id and input_path
 
         Returns:
-            Batch job ID as string
+            Tuple of (batch_job_id, sbatch_content) as strings
 
         Raises:
             ModelCreationException: If job submission fails at any step
@@ -39,6 +41,9 @@ class PredictionFacade:
         )
 
         try:
+            # Create output_path directory
+            create_dir(prediction_variables.output_path)
+
             # Generate sbatch content using template generator
             sbatch_content = self.template_generator.generate_inference_sbatch_content(prediction_variables)
 
@@ -46,7 +51,7 @@ class PredictionFacade:
             job_id = self.slurm_client.submit_sbatch_job(sbatch_content)
 
             self.logger.info(f"Prediction job submitted successfully - Job ID: {job_id}")
-            return job_id
+            return job_id, sbatch_content
 
         except Exception as e:
             self.logger.error(f"Failed to submit prediction job: {str(e)}")

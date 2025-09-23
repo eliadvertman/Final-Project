@@ -6,7 +6,7 @@ import threading
 from typing import Optional
 
 from stroke_seg.logging_config import get_logger
-from stroke_seg.bl.poller.job_monitor import JobsMonitor
+from stroke_seg.bl.poller.job_monitor_manager import JobMonitorManager
 
 
 class PollerFacade:
@@ -19,15 +19,15 @@ class PollerFacade:
     - Health monitoring and status reporting
     """
     
-    def __init__(self, jobs_monitor: Optional[JobsMonitor] = None):
+    def __init__(self, jobs_monitor: Optional[JobMonitorManager] = None):
         """
         Initialize poller facade.
-        
+
         Args:
-            jobs_monitor: JobPoller instance (creates new one if None)
+            jobs_monitor: JobMonitorManager instance (creates new one if None)
         """
         self.logger = get_logger(__name__)
-        self.jobs_monitor = jobs_monitor or JobsMonitor()
+        self.jobs_monitor = jobs_monitor or JobMonitorManager()
         
         self._thread: Optional[threading.Thread] = None
         self._loop: Optional[asyncio.AbstractEventLoop] = None

@@ -3,6 +3,9 @@ from pathlib import Path
 
 models_base_path = '/home/veeliad/work/BrainSegmentation/models'
 
+# SLURM job configuration
+task_number = 130
+
 # Template paths configuration
 _template_dir = Path(__file__).parent / "templates"
 training_template_path = str(_template_dir / "sbatch_train_template")

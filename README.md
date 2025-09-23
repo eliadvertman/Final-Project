@@ -1,37 +1,90 @@
 # PIC - Prediction and Model Management Service
 
-A scalable machine learning prediction service with PostgreSQL database persistence, connection pooling, and comprehensive API endpoints for model training and inference.
+**Enterprise-grade ML orchestration platform** with SLURM HPC integration, real-time job monitoring, and production-ready architecture for scalable machine learning workflows.
 
 ## Project Structure
 
 ```
-├── serving/                   # Python ML service
+├── serving/                   # Python ML orchestration service
 │   ├── stroke_seg/            # Main application package
-│   │   ├── app.py             # Flask application with health checks
-│   │   ├── controller/        # REST API controllers
-│   │   ├── bl/                # Business logic layer
-│   │   ├── dao/               # Data access layer (Peewee ORM + connection pooling)
-│   │   ├── error_handler.py   # Centralized error handling
+│   │   ├── app.py             # Flask app with CORS, health checks, job poller integration
+│   │   ├── controller/        # REST API controllers with comprehensive endpoints
+│   │   ├── bl/                # Business logic layer with SLURM integration
+│   │   │   ├── client/        # External system integrations (SLURM, filesystem)
+│   │   │   ├── poller/        # SOLID job monitoring architecture
+│   │   │   ├── template/      # Job template system with variable substitution
+│   │   │   ├── training/      # Training-specific business logic
+│   │   │   └── prediction/    # Prediction-specific business logic
+│   │   ├── dao/               # Data access layer with connection pooling & UUID support
+│   │   ├── config.py          # Application configuration management
+│   │   ├── error_handler.py   # Smart error handling with auto JSON validation
 │   │   ├── exceptions.py      # Custom exception hierarchy
-│   │   ├── logging_config.py  # Centralized logging configuration
-│   │   └── test/              # Comprehensive test suite with testcontainers
-│   └── requirements.txt       # Python dependencies
-├── db/                        # Database configuration
-│   ├── docker-compose.yml     # Docker setup
-│   ├── postgres-fixed.def     # Singularity definition
-│   └── DATABASE_SETUP.md      # Database setup instructions
-└── stroke_seg/                # Virtual environment (excluded from git)
+│   │   ├── logging_config.py  # Structured logging with correlation IDs
+│   │   └── test/              # Comprehensive test suite with automated testcontainers
+│   └── requirements.txt       # Python dependencies (peewee, testcontainers, etc.)
+├── db/                        # Database configuration & deployment
+│   ├── docker-compose.yml     # Docker development setup
+│   ├── postgres-fixed.def     # Singularity HPC production setup
+│   ├── init/                  # Database initialization scripts
+│   └── DATABASE_SETUP.md      # Comprehensive setup instructions
+├── fe/                        # Frontend React application (optional)
+└── docs/                      # Additional documentation
 ```
 
-## Features
+## Key Features
 
-✅ **Complete REST API** - Full CRUD operations for models and predictions  
-✅ **Connection Pooling** - High-performance database connections (~50x faster)  
-✅ **UUID Primary Keys** - Scalable distributed system architecture  
-✅ **Smart Error Handling** - Centralized, consistent error responses  
-✅ **Health Monitoring** - Database pool status endpoint  
-✅ **Automated Testing** - Comprehensive test suite with testcontainers  
-✅ **Multi-Environment** - Docker (dev) + Singularity (HPC) support  
+✅ **SLURM HPC Integration** - Native integration with high-performance computing clusters
+✅ **Real-time Job Monitoring** - Async polling with automatic status updates and fault tolerance
+✅ **SOLID Architecture** - Separate monitors for training and prediction jobs following best practices
+✅ **Complete REST API** - Full CRUD operations with pagination and health monitoring
+✅ **Connection Pooling** - High-performance database connections (~50x faster)
+✅ **Template System** - Configurable SLURM job templates with variable substitution
+✅ **Structured Logging** - Request correlation IDs, performance metrics, configurable formats
+✅ **Smart Error Handling** - Centralized error responses with auto JSON validation
+✅ **Health Monitoring** - Database pool status and job poller health endpoints
+✅ **Automated Testing** - Comprehensive test suite with automated testcontainers
+✅ **Multi-Environment** - Docker (development) + Singularity (HPC production)
+✅ **UUID Architecture** - Scalable distributed system with proper data relationships
+
+## System Capabilities
+
+This platform provides **enterprise-grade ML orchestration** with the following capabilities:
+
+### **🚀 Job Orchestration**
+- **End-to-end ML workflows**: From training request to model deployment
+- **SLURM integration**: Native HPC cluster job submission and monitoring
+- **Real-time tracking**: Automatic job status updates with state machine validation
+- **Template system**: Configurable job generation with variable substitution
+- **Dynamic output directories**: Unique output paths for each inference job preventing conflicts
+- **Fault tolerance**: Graceful handling of job failures and system errors
+
+### **🏗️ Production Architecture**
+- **Three-tier design**: Controllers → Business Logic → Data Access Objects
+- **SOLID principles**: Separate monitors for training and prediction jobs
+- **Connection pooling**: ~50x performance improvement with configurable limits
+- **Async processing**: Background job monitoring with proper lifecycle management
+- **Health monitoring**: Comprehensive status endpoints for system observability
+
+### **📊 Data Management**
+- **UUID-based architecture**: Scalable distributed system design
+- **Atomic transactions**: Database consistency during complex operations
+- **Relationship mapping**: Complete foreign key relationships between entities
+- **JSON flexibility**: Structured input/output data with schema validation
+- **Output directory tracking**: Dynamic path generation for inference job outputs
+- **Migration support**: Schema evolution with backward compatibility
+
+### **🔍 Observability & Monitoring**
+- **Structured logging**: Request correlation IDs and performance metrics
+- **Health endpoints**: Database pool status and job poller monitoring
+- **Error tracking**: Centralized error handling with smart validation
+- **Request tracing**: Complete request lifecycle monitoring
+- **Configurable formats**: JSON and standard logging for different environments
+
+### **🐳 Deployment Flexibility**
+- **Docker development**: Easy local setup with docker-compose
+- **Singularity production**: HPC deployment with container isolation
+- **Environment configuration**: Flexible configuration for different deployments
+- **Template management**: Configurable job templates for different environments
 
 ## Quick Start
 
@@ -50,45 +103,97 @@ pytest serving/stroke_seg/test/ -v
 python serving/stroke_seg/app.py
 ```
 
-**API Endpoints:**
+## Complete API Documentation
+
+### **Health & Monitoring Endpoints**
 ```bash
-# Health check
+# Overall application health
+curl http://localhost:8080/health
+
+# Database connection pool health and metrics
 curl http://localhost:8080/health/db
 
-# Training management  
+# Job poller health and monitoring status
+curl http://localhost:8080/health/poller
+```
+
+### **Training Management (SLURM Job Integration)**
+```bash
+# Initiate model training with SLURM job submission
 curl -X POST http://localhost:8080/api/v1/training/train \
   -H "Content-Type: application/json" \
   -d '{
     "modelName": "CustomerChurnPredictor",
     "imagesPath": "/work/images",
-    "labelsPath": "/work/labels"
+    "labelsPath": "/work/labels",
+    "foldIndex": 0,
+    "taskNumber": 1
   }'
 
-# Get training status (replace UUID with actual training ID)
+# Get training status with progress and timing
 curl http://localhost:8080/api/v1/training/d290f1ee-6c54-4b01-90e6-d701748f0851/status
 
-# Model management
+# List all trainings with pagination
+curl "http://localhost:8080/api/v1/training/list?limit=10&offset=0"
+```
+
+### **Model Management**
+```bash
+# List all available models with pagination
 curl "http://localhost:8080/api/v1/model/list?limit=10&offset=0"
 
-# Get model status (replace UUID with actual model ID)  
+# Get model status and metadata
 curl http://localhost:8080/api/v1/model/d290f1ee-6c54-4b01-90e6-d701748f0851/status
+```
 
-# Predictions  
-curl -X POST http://localhost:8080/api/v1/predict/predict \
+### **Prediction/Inference (SLURM Job Integration)**
+```bash
+# Make predictions using specified model with job tracking
+# Note: outputDir is automatically generated for each prediction job
+curl -X POST http://localhost:8080/api/v1/inference/predict \
   -H "Content-Type: application/json" \
   -d '{
     "modelId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
-    "inputData": {
-      "feature1": 10.5,
-      "feature2": "Value A",
-      "feature3": true
-    }
+    "inputPath": "/work/input/patient_scan.nii"
   }'
 
-curl "http://localhost:8080/api/v1/predict/list?limit=10&offset=0"
+# Get prediction status with timing and results
+curl http://localhost:8080/api/v1/inference/e678f2ee-1a2b-3c4d-5e6f-7a8b9c0d1e2f/status
 
-# Get prediction status (replace UUID with actual prediction ID)
-curl http://localhost:8080/api/v1/predict/e678f2ee-1a2b-3c4d-5e6f-7a8b9c0d1e2f/status
+# List all predictions with pagination
+curl "http://localhost:8080/api/v1/inference/list?limit=10&offset=0"
+```
+
+### **Response Examples**
+
+**Training Status Response:**
+```json
+{
+  "trainingId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
+  "status": "TRAINING",
+  "progress": 45.2,
+  "startTime": "2024-01-15T10:30:00Z",
+  "batchJobId": "12345"
+}
+```
+
+**Health Check Response:**
+```json
+{
+  "status": "healthy",
+  "database": {
+    "connected": true,
+    "pool_size": 5,
+    "active_connections": 2
+  },
+  "job_poller": {
+    "running": true,
+    "monitors": {
+      "training": "running",
+      "prediction": "running"
+    }
+  }
+}
 ```
 
 ## Development Commands

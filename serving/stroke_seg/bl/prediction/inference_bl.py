@@ -59,30 +59,38 @@ class InferenceBL:
             raise ModelNotFoundException(str(model_uuid))
 
         try:
+            # Generate dynamic output directory path
+            inference_id = str(uuid.uuid4())
+            current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+            output_dir = f"{model_record.training_id.model_path}/inference/{inference_id}-{current_time}"
+
             # Prepare variables for sbatch template
             prediction_variables = PredictionTemplateVariables(
                 model_name=model_record.model_name,
                 model_path=model_record.training_id.model_path,
-                output_path=inference_input.input_path
+                output_path=output_dir,
+                fold_index=inference_input.fold_index
             )
 
             # Submit job to Singularity via sbatch
-            sbatch_job_id = self.prediction_facade.submit_prediction_job(prediction_variables)
+            sbatch_job_id, sbatch_content = self.prediction_facade.submit_prediction_job(prediction_variables)
 
             # Create job record first
             job_record = JobRecord(
                 sbatch_id=sbatch_job_id,
-                fold_index=0,
-                task_number=0,
+                fold_index=inference_input.fold_index,
                 job_type=JobType.INFERENCE.value,
-                status='PENDING'
+                status='PENDING',
+                sbatch_content=sbatch_content
             )
             job_record = self.job_dao.create(job_record)
 
             # Create inference record with reference to job
             inference_record = InferenceRecord(
+                predict_id=inference_id,
                 model_id=model_record,
                 input_data=inference_input.input_path,
+                output_dir=output_dir,
                 prediction=None,
                 status='PENDING',
                 start_time=datetime.now(),
@@ -128,7 +136,7 @@ class InferenceBL:
         response = {
             "predictId": str(inference_record.predict_id),
             "status": inference_record.status,
-            "modelId": str(inference_record.model_id.model_id)
+            "modelId": str(inference_record.model_id.id)
         }
         
         if inference_record.start_time:
@@ -167,7 +175,7 @@ class InferenceBL:
             for prediction in predictions:
                 response.append({
                     "predictId": str(prediction.predict_id),
-                    "modelId": str(prediction.model_id.model_id),
+                    "modelId": str(prediction.model_id.id),
                     "status": prediction.status,
                     "createdAt": prediction.created_at.isoformat() + 'Z'
                 })

@@ -55,20 +55,19 @@ class TrainingBL:
             training_variables = TrainingTemplateVariables(
                 model_name=training_conf.model_name,
                 model_path=model_path,
-                fold_index=training_conf.fold_index,
-                task_number=training_conf.task_number
+                fold_index=training_conf.fold_index
             )
             
             # Submit job to Singularity via sbatch
-            sbatch_job_id = self.model_training_facade.submit_training_job(training_variables)
+            sbatch_job_id, sbatch_content = self.model_training_facade.submit_training_job(training_variables)
 
             # Create job record first
             job_record = JobRecord(
                 sbatch_id=sbatch_job_id,
                 fold_index=training_conf.fold_index,
-                task_number=training_conf.task_number,
-                job_type= 'TRAINING',
-                status='PENDING'
+                job_type='TRAINING',
+                status='PENDING',
+                sbatch_content=sbatch_content
             )
             job_record = self.job_dao.create(job_record)
 
@@ -156,8 +155,8 @@ class TrainingBL:
             response["startTime"] = training_record.start_time.isoformat() + 'Z'
         if training_record.end_time:
             response["endTime"] = training_record.end_time.isoformat() + 'Z'
-        if training_record.error_message:
-            response["errorMessage"] = training_record.error_message
+        if training_record.job_id.error_message:
+            response["errorMessage"] = training_record.job_id.error_message
             
         return response
     

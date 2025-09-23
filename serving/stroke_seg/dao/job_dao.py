@@ -40,13 +40,10 @@ class JobDAO:
         """Get all jobs with a specific status."""
         return list(JobRecord.select().where(JobRecord.status == status))
     
-    def get_by_fold_and_task(self, fold_index: int, task_number: int) -> Optional[JobRecord]:
-        """Get a job by fold index and task number."""
+    def get_by_fold_index(self, fold_index: int) -> Optional[JobRecord]:
+        """Get a job by fold index."""
         try:
-            return JobRecord.get(
-                (JobRecord.fold_index == fold_index) &
-                (JobRecord.task_number == task_number)
-            )
+            return JobRecord.get(JobRecord.fold_index == fold_index)
         except DoesNotExist:
             return None
     

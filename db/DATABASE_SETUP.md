@@ -1,6 +1,116 @@
 # PostgreSQL Database Setup
 
-This document describes how to run PostgreSQL database for the PIC project in both Docker (development) and Singularity (Slurm production) environments.
+This document describes how to run PostgreSQL database for the PIC project in both Docker (development) and Singularity (SLURM production) environments, including the complete database schema for the ML orchestration platform.
+
+## Database Schema Overview
+
+The database supports a complete ML workflow with job tracking, training management, model lifecycle, and prediction handling:
+
+### **Core Tables**
+- **`jobs`** - SLURM job tracking with sbatch integration
+- **`training`** - Training record management linked to jobs
+- **`model`** - Model lifecycle management linked to training
+- **`inference`** - Prediction/inference tracking with job integration
+
+### **Key Features**
+- **UUID primary keys** for distributed system scalability
+- **Foreign key relationships** maintaining data integrity
+- **JSON fields** for flexible input/output data storage
+- **Timestamp tracking** for complete audit trails
+- **Status management** with proper state transitions
+
+## Complete Database Schema
+
+### **Jobs Table (`jobs`)**
+Tracks SLURM job submissions and status for both training and inference.
+
+```sql
+CREATE TABLE jobs (
+    id VARCHAR(36) PRIMARY KEY,           -- UUID primary key
+    sbatch_id VARCHAR(255) NOT NULL,     -- SLURM job ID from sbatch
+    fold_index DECIMAL(4,0) NOT NULL,    -- Cross-validation fold
+    job_type VARCHAR(20) NOT NULL        -- 'TRAINING' or 'INFERENCE'
+        CHECK (job_type IN ('INFERENCE', 'TRAINING')),
+    status VARCHAR(20) NOT NULL          -- Job status
+        CHECK (status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')),
+    start_time TIMESTAMP NULL,           -- Job start time from SLURM
+    end_time TIMESTAMP NULL,             -- Job completion time
+    error_message TEXT NULL,             -- Error details for failed jobs
+    sbatch_content TEXT NULL             -- Interpolated SLURM template content
+);
+```
+
+### **Training Table (`training`)**
+Manages model training records with progress tracking.
+
+```sql
+CREATE TABLE training (
+    id VARCHAR(36) PRIMARY KEY,          -- UUID primary key
+    name VARCHAR(255) NOT NULL,          -- Training name/identifier
+    images_path VARCHAR(500) NULL,       -- Path to training images
+    labels_path VARCHAR(500) NULL,       -- Path to training labels
+    model_path VARCHAR(500) NULL,        -- Output model path
+    job_id VARCHAR(36) NOT NULL          -- Foreign key to jobs table
+        REFERENCES jobs(id),
+    status VARCHAR(20) NOT NULL          -- Training status
+        CHECK (status IN ('TRAINING', 'TRAINED', 'FAILED')),
+    progress FLOAT DEFAULT 0.0,          -- Training progress (0.0-100.0)
+    start_time TIMESTAMP NULL,           -- Training start time
+    end_time TIMESTAMP NULL              -- Training completion time
+);
+```
+
+### **Model Table (`model`)**
+Tracks trained models and their metadata.
+
+```sql
+CREATE TABLE model (
+    id VARCHAR(36) PRIMARY KEY,          -- UUID primary key
+    training_id VARCHAR(36) NOT NULL     -- Foreign key to training table
+        REFERENCES training(id),
+    model_name VARCHAR(255) NOT NULL,    -- Model identifier
+    created_at TIMESTAMP NULL            -- Model creation timestamp
+);
+```
+
+### **Inference Table (`inference`)**
+Manages prediction requests and results.
+
+```sql
+CREATE TABLE inference (
+    predict_id VARCHAR(36) PRIMARY KEY,  -- UUID primary key
+    model_id VARCHAR(36) NOT NULL        -- Foreign key to model table
+        REFERENCES model(id),
+    job_id VARCHAR(36) NULL              -- Foreign key to jobs table
+        REFERENCES jobs(id),
+    input_data JSONB NOT NULL,           -- Input data for prediction
+    output_dir VARCHAR(500) NULL,        -- Dynamic output directory path
+    prediction JSONB NULL,               -- Prediction results
+    status VARCHAR(20) NOT NULL          -- Inference status
+        CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')),
+    start_time TIMESTAMP NULL,           -- Inference start time
+    end_time TIMESTAMP NULL,             -- Inference completion time
+    error_message TEXT NULL,             -- Error details
+    created_at TIMESTAMP DEFAULT NOW(),  -- Record creation time
+    updated_at TIMESTAMP DEFAULT NOW()   -- Last update time
+);
+```
+
+### **Relationship Diagram**
+```
+jobs (1) ←→ (1) training (1) ←→ (*) model (1) ←→ (*) inference
+  ↑                                                     ↓
+  └─────────────────────────────────────────────────────┘
+  (jobs can also link directly to inference for prediction jobs)
+```
+
+### **Connection Pooling Configuration**
+The application uses Peewee ORM with connection pooling for high performance:
+
+- **Pool size**: Configurable via `DB_MAX_CONNECTIONS` (default: 5)
+- **Stale timeout**: Idle connection timeout via `DB_STALE_TIMEOUT` (default: 300s)
+- **Connection timeout**: New connection timeout via `DB_CONNECTION_TIMEOUT` (default: 30s)
+- **Performance**: ~50x improvement over per-request connections
 
 ## Docker Setup (Development)
 
@@ -215,4 +325,137 @@ tail -f postgres.log
 
 # Test connection
 singularity exec postgres.sif psql -U pic_user -d pic_db -c "SELECT version();"
+```
+
+## Database Schema Verification
+
+### **Table Structure Validation**
+```bash
+# Verify all tables exist
+docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db -c "\dt"
+
+# Expected output should show:
+#           List of relations
+#  Schema |   Name    | Type  |  Owner
+# --------+-----------+-------+---------
+#  public | inference | table | pic_user
+#  public | jobs      | table | pic_user
+#  public | model     | table | pic_user
+#  public | training  | table | pic_user
+
+# Check jobs table structure
+docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db -c "\d jobs"
+
+# Check foreign key relationships
+docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db -c "\d+ training"
+```
+
+### **Data Consistency Checks**
+```bash
+# Verify foreign key constraints
+docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db -c "
+SELECT
+    tc.table_name,
+    kcu.column_name,
+    ccu.table_name AS foreign_table_name,
+    ccu.column_name AS foreign_column_name
+FROM
+    information_schema.table_constraints AS tc
+    JOIN information_schema.key_column_usage AS kcu
+      ON tc.constraint_name = kcu.constraint_name
+      AND tc.table_schema = kcu.table_schema
+    JOIN information_schema.constraint_column_usage AS ccu
+      ON ccu.constraint_name = tc.constraint_name
+      AND ccu.table_schema = tc.table_schema
+WHERE tc.constraint_type = 'FOREIGN KEY';
+"
+
+# Check table constraints
+docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db -c "
+SELECT table_name, constraint_name, constraint_type
+FROM information_schema.table_constraints
+WHERE table_schema = 'public'
+ORDER BY table_name, constraint_type;
+"
+```
+
+### **Performance Verification**
+```bash
+# Check connection pooling is working (requires app running)
+curl http://localhost:8080/health/db
+
+# Expected response:
+# {
+#   "status": "healthy",
+#   "database": {
+#     "connected": true,
+#     "pool_size": 5,
+#     "active_connections": 1,
+#     "available_connections": 4
+#   }
+# }
+```
+
+## Application Integration
+
+### **Environment Variables for Application**
+```bash
+# Development environment
+export DB_NAME=pic_db
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_USER=pic_user
+export DB_PASSWORD=pic_password
+
+# Connection pooling
+export DB_MAX_CONNECTIONS=5
+export DB_STALE_TIMEOUT=300
+export DB_CONNECTION_TIMEOUT=30
+
+# Logging
+export LOG_LEVEL=INFO
+export LOG_FORMAT=standard
+```
+
+### **Production Environment (HPC)**
+```bash
+# SLURM environment variables
+export DB_NAME=pic_db
+export DB_HOST=<singularity_container_ip>
+export DB_PORT=5432
+export DB_USER=pic_user
+export DB_PASSWORD=secure_production_password
+
+# SLURM job configuration
+export SLURM_POLL_INTERVAL=30
+export TRAINING_TEMPLATE_PATH=/work/templates/sbatch_train_template
+export INFERENCE_TEMPLATE_PATH=/work/templates/sbatch_inference_template
+export MODELS_BASE_PATH=/work/models
+```
+
+## Migration and Backup
+
+### **Database Backup**
+```bash
+# Create backup
+docker-compose -f db/docker-compose.yml exec database pg_dump -U pic_user pic_db > backup.sql
+
+# Restore from backup
+docker-compose -f db/docker-compose.yml exec -T database psql -U pic_user -d pic_db < backup.sql
+```
+
+### **Schema Migration**
+The application uses Peewee ORM which handles schema changes programmatically. For manual migration:
+
+```bash
+# Connect to database
+docker-compose -f db/docker-compose.yml exec database psql -U pic_user -d pic_db
+
+# Example: Add new column to jobs table
+ALTER TABLE jobs ADD COLUMN priority INTEGER DEFAULT 0;
+
+# Example: Create index for performance
+CREATE INDEX idx_jobs_status ON jobs(status);
+CREATE INDEX idx_training_status ON training(status);
+CREATE INDEX idx_inference_status ON inference(status);
 ```

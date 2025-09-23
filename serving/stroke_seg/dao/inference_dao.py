@@ -67,3 +67,10 @@ class InferenceDAO:
     def count_by_model(self, model_uuid: uuid.UUID) -> int:
         """Get count of inferences for a specific model."""
         return InferenceRecord.select().where(InferenceRecord.model_id == str(model_uuid)).count()
+
+    def get_by_job_id(self, job_uuid: uuid.UUID) -> Optional[InferenceRecord]:
+        """Get an inference by job_id UUID."""
+        try:
+            return InferenceRecord.get(InferenceRecord.job_id == str(job_uuid))
+        except DoesNotExist:
+            return None

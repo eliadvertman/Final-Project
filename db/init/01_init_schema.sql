@@ -3,12 +3,12 @@ CREATE TABLE IF NOT EXISTS jobs (
     id VARCHAR(36) PRIMARY KEY,
     sbatch_id VARCHAR(255) NOT NULL,
     fold_index NUMERIC(4) NOT NULL,
-    task_number NUMERIC(4) NOT NULL,
     job_type VARCHAR(20) NOT NULL CHECK (job_type IN ('INFERENCE', 'TRAINING')),
     status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')),
     start_time TIMESTAMP WITH TIME ZONE,
     end_time TIMESTAMP WITH TIME ZONE,
-    error_message TEXT
+    error_message TEXT,
+    sbatch_content TEXT
 );
 
 -- Create Training table
@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS inference (
     model_id VARCHAR(36) NOT NULL REFERENCES model(id),
     job_id VARCHAR(36) REFERENCES jobs(id),
     input_data JSONB NOT NULL,
+    output_dir VARCHAR(500),
     prediction JSONB,
     status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED')),
     start_time TIMESTAMP WITH TIME ZONE,

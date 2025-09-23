@@ -11,6 +11,7 @@ interface NotificationState {
 const Prediction: React.FC = () => {
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [inputPath, setInputPath] = useState<string>('');
+  const [foldIndex, setFoldIndex] = useState<number>(0);
   const [notification, setNotification] = useState<NotificationState>({
     type: null,
     message: '',
@@ -20,7 +21,7 @@ const Prediction: React.FC = () => {
   const makePredictionMutation = useMakePrediction();
 
   // Filter only trained models for predictions
-  const trainedModels = models?.filter(model => model.trainingStatus === 'TRAINED') || [];
+  const trainedModels = models?.filter(model => model.status === 'TRAINED') || [];
 
   // Auto-dismiss success notifications after 7 seconds (longer for prediction results)
   useEffect(() => {
@@ -61,9 +62,19 @@ const Prediction: React.FC = () => {
       return;
     }
 
+    if (foldIndex < 0) {
+      setNotification({
+        type: 'error',
+        message: 'Invalid fold index',
+        details: 'Fold index must be a non-negative number.'
+      });
+      return;
+    }
+
     const request: PredictionRequest = {
       modelId: selectedModelId,
-      inputPath: inputPath.trim()
+      inputPath: inputPath.trim(),
+      foldIndex
     };
 
     try {
@@ -209,6 +220,34 @@ const Prediction: React.FC = () => {
             />
             <small style={{ color: '#666' }}>
               Enter the path to the input file for prediction. Example: /work/images/sample.jpg
+            </small>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
+              Fold Index *
+            </label>
+            <input
+              type="number"
+              value={foldIndex}
+              onChange={(e) => {
+                const value = parseInt(e.target.value, 10);
+                setFoldIndex(isNaN(value) ? 0 : value);
+                handleFormChange();
+              }}
+              required
+              style={{
+                width: '100%',
+                padding: '8px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+              placeholder="Enter fold index (default: 0)"
+              min="0"
+            />
+            <small style={{ color: '#666' }}>
+              Required fold index for cross-validation. Specify which fold to use for prediction (minimum: 0).
             </small>
           </div>
 

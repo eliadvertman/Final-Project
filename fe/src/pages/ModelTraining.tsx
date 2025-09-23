@@ -14,7 +14,6 @@ const ModelTraining: React.FC = () => {
     imagesPath: '',
     labelsPath: '',
     foldIndex: undefined,
-    taskNumber: undefined,
   });
 
   const [notification, setNotification] = useState<NotificationState>({
@@ -84,7 +83,6 @@ const ModelTraining: React.FC = () => {
         imagesPath: '',
         labelsPath: '',
         foldIndex: undefined,
-        taskNumber: undefined,
       });
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to start training';
@@ -239,26 +237,6 @@ const ModelTraining: React.FC = () => {
           />
         </div>
 
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-            Task Number
-          </label>
-          <input
-            type="number"
-            name="taskNumber"
-            value={formData.taskNumber || ''}
-            onChange={handleInputChange}
-            style={{
-              width: '100%',
-              padding: '8px',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-            placeholder="Enter task number for SLURM job identification"
-            min="0"
-          />
-        </div>
 
         <button
           type="submit"

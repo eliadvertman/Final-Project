@@ -5,7 +5,6 @@ export interface TrainingConfig {
   imagesPath?: string;
   labelsPath?: string;
   foldIndex?: number;
-  taskNumber?: number;
 }
 
 export interface ModelStatus {
@@ -20,15 +19,14 @@ export interface ModelStatus {
 export interface ModelSummary {
   modelId: string;
   modelName: string;
-  modelPath: string;
   status: 'PENDING' | 'TRAINING' | 'TRAINED' | 'FAILED' | 'DEPLOYED';
-  trainingStatus: 'PENDING' | 'TRAINING' | 'TRAINED' | 'FAILED' | 'DEPLOYED';
   createdAt: string;
 }
 
 export interface PredictionRequest {
   modelId: string;
   inputPath: string;
+  foldIndex: number;
 }
 
 export interface PredictionResponse {
