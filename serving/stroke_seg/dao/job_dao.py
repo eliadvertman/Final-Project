@@ -40,13 +40,6 @@ class JobDAO:
         """Get all jobs with a specific status."""
         return list(JobRecord.select().where(JobRecord.status == status))
     
-    def get_by_fold_index(self, fold_index: int) -> Optional[JobRecord]:
-        """Get a job by fold index."""
-        try:
-            return JobRecord.get(JobRecord.fold_index == fold_index)
-        except DoesNotExist:
-            return None
-    
     def get_active_jobs(self) -> List[JobRecord]:
         """Get all jobs with PENDING or RUNNING status."""
         return list(JobRecord.select().where(JobRecord.status.in_(['PENDING', 'RUNNING'])))

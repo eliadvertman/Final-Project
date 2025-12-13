@@ -10,7 +10,6 @@ class JobRecord(BaseModel):
     """ORM model for the jobs table."""
     id = CharField(primary_key=True, max_length=36, default=lambda: str(uuid.uuid4()))
     sbatch_id = CharField(max_length=255, null=False)
-    fold_index = DecimalField(max_digits=4, decimal_places=0, null=False)
     job_type = CharField(max_length=20, null=False, constraints=[Check("job_type IN ('INFERENCE', 'TRAINING')")])
     status = CharField(max_length=20, null=False, constraints=[Check("status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')")])
     start_time = DateTimeField(null=True)
@@ -29,6 +28,7 @@ class TrainingRecord(BaseModel):
     images_path = CharField(max_length=500, null=True)
     labels_path = CharField(max_length=500, null=True)
     model_path = CharField(max_length=500, null=True)
+    configuration = CharField(max_length=20, null=False, constraints=[Check("configuration IN ('2d', '3d_fullres', '3d_lowres', '3d_cascade_lowres')")])
     job_id = ForeignKeyField(JobRecord, field='id', backref='training', null=False)
     status = CharField(max_length=20, null=False, constraints=[Check("status IN ('TRAINING', 'TRAINED', 'FAILED')")])
     progress = FloatField(default=0.0)

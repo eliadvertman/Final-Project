@@ -15,6 +15,6 @@
 
 
 ## run time
-singularity run --fakeroot --overlay TEST/overlay --nv --env device=cuda --env fold_index=1 --env task_number=130 --pwd /stroke_segmentation --mount type=bind,source=$(pwd)/output,destination=/stroke_segmentation/nnunet_results training_big_lesions.sif
+singularity run --fakeroot --overlay TEST/overlay --nv --env device=cuda --env configuration=3d_fullres --env task_number=130 --pwd /stroke_segmentation --mount type=bind,source=$(pwd)/output,destination=/stroke_segmentation/nnunet_results training_big_lesions.sif
 
 

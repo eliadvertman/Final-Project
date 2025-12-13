@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Read(//mnt/c/Users/Eliad/Documents/Final Project/Final Project/project/Final-Project/db/**)",
+      "Read(//mnt/c/Users/Eliad/Documents/Final/**)",
+      "Read(//mnt/c/Users/Eliad/Documents/Final Project/Final Project/project/Final-Project/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

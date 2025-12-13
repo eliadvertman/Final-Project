@@ -19,12 +19,13 @@ class TestTemplateGenerator:
         # Create test variables matching the current template requirements
         expected_timestamp = 1757589116
         model_name = 'test_stroke_model'
-        expected_fold_index = 1
+        expected_configuration = '3d_fullres'
         expected_task_num = 130
 
         test_variables = TrainingTemplateVariables(
             model_name=model_name,
-            fold_index = expected_fold_index,
+            model_path="$(pwd)/output",
+            configuration=expected_configuration,
             timestamp=expected_timestamp
         )
         
@@ -64,32 +65,34 @@ class TestTemplateGenerator:
     def test_interpolate_template_with_valid_variables(self):
         """Test template interpolation with valid variables."""
         # Create a simple test template
-        test_template_content = "Job: {model_name}, Fold: {fold_index}, Task: 130, Timestamp: {timestamp}"
+        test_template_content = "Job: {model_name}, Config: {configuration}, Task: 130, Timestamp: {timestamp}"
         
         with patch.object(TemplateGenerator, '_load_template', return_value=test_template_content):
             generator = TemplateGenerator()
             
             variables = TrainingTemplateVariables(
                 model_name="test_model",
-                fold_index=2,
+                model_path="/path/to/model",
+                configuration="3d_fullres",
                 timestamp=1234567890
             )
             
             result = generator.interpolate_template(variables)
             
-            assert result == "Job: test_model, Fold: 2, Task: 130, Timestamp: 1234567890"
+            assert result == "Job: test_model, Config: 3d_fullres, Task: 130, Timestamp: 1234567890"
     
     def test_interpolate_template_missing_variables(self):
         """Test template interpolation with missing variables in template."""
         # Template requires variables that aren't in the dataclass
-        test_template_content = "Job: {model_name}, Fold: {fold_index}, Task: 130, Timestamp: {timestamp}, Extra: {missing_var}"
+        test_template_content = "Job: {model_name}, Config: {configuration}, Task: 130, Timestamp: {timestamp}, Extra: {missing_var}"
         
         with patch.object(TemplateGenerator, '_load_template', return_value=test_template_content):
             generator = TemplateGenerator()
             
             variables = TrainingTemplateVariables(
                 model_name="test_model",
-                fold_index=3,
+                model_path="/path/to/model",
+                configuration="3d_fullres",
                 timestamp=1234567890
             )
             
@@ -100,20 +103,21 @@ class TestTemplateGenerator:
     
     def test_generate_sbatch_content(self):
         """Test complete sbatch content generation workflow."""
-        test_template_content = "#!/bin/bash\n#SBATCH --job-name={model_name}-{timestamp}\nsingularity run --env fold_index={fold_index} --env task_number=130\necho 'Training {model_name}'"
+        test_template_content = "#!/bin/bash\n#SBATCH --job-name={model_name}-{timestamp}\nsingularity run --env configuration={configuration} --env task_number=130\necho 'Training {model_name}'"
         
         with patch.object(TemplateGenerator, '_load_template', return_value=test_template_content):
             generator = TemplateGenerator()
             
             variables = TrainingTemplateVariables(
                 model_name="neural_net",
-                fold_index=4,
+                model_path="/path/to/model",
+                configuration="3d_lowres",
                 timestamp=9876543210
             )
             
             result = generator.generate_training_sbatch_content(variables)
             
-            expected = "#!/bin/bash\n#SBATCH --job-name=neural_net-9876543210\nsingularity run --env fold_index=4 --env task_number=130\necho 'Training neural_net'"
+            expected = "#!/bin/bash\n#SBATCH --job-name=neural_net-9876543210\nsingularity run --env configuration=3d_lowres --env task_number=130\necho 'Training neural_net'"
             assert result == expected
     
     def test_custom_template_path(self):
@@ -128,7 +132,8 @@ class TestTemplateGenerator:
             
             variables = TrainingTemplateVariables(
                 model_name="custom_model",
-                fold_index=5,
+                model_path="/path/to/model",
+                configuration="2d",
                 timestamp=1111111111
             )
             
@@ -140,17 +145,17 @@ class TestTemplateGenerator:
             os.unlink(temp_path)
     
     def test_template_validation_empty_strings(self):
-        """Test that SbatchTemplateVariables validates against empty strings and invalid integers."""
+        """Test that SbatchTemplateVariables validates against empty strings and invalid configuration."""
         with pytest.raises(ValueError) as exc_info:
-            TrainingTemplateVariables(model_name="", fold_index=1, timestamp=1234567890)
+            TrainingTemplateVariables(model_name="", model_path="/path/to/model", configuration="3d_fullres", timestamp=1234567890)
         
         assert "model_name must be a non-empty string" in str(exc_info.value)
         
-        # Test fold_index validation (0 is considered falsy and should fail)
+        # Test configuration validation (invalid value should fail)
         with pytest.raises(ValueError) as exc_info:
-            TrainingTemplateVariables(model_name="valid_name", fold_index=0, timestamp=1234567890)
+            TrainingTemplateVariables(model_name="valid_name", model_path="/path/to/model", configuration="invalid_config", timestamp=1234567890)
         
-        assert "fold_index must be a non-empty string" in str(exc_info.value)
+        assert "configuration must be one of" in str(exc_info.value)
         
         # task_number is now hardcoded to 130, no validation needed
     
@@ -158,7 +163,8 @@ class TestTemplateGenerator:
         """Test SbatchTemplateVariables to_dict method."""
         variables = TrainingTemplateVariables(
             model_name="test_model",
-            fold_index=6,
+            model_path="/path/to/model",
+            configuration="3d_cascade_lowres",
             timestamp=1234567890
         )
         
@@ -166,8 +172,9 @@ class TestTemplateGenerator:
         
         expected = {
             'model_name': 'test_model',
+            'model_path': '/path/to/model',
             'timestamp': 1234567890,
-            'fold_index': 6,
+            'configuration': '3d_cascade_lowres',
             'task_number': 130
         }
         

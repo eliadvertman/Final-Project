@@ -1,10 +1,12 @@
 // API Types based on swagger.yaml specification
 
+export type ConfigurationType = '2d' | '3d_fullres' | '3d_lowres' | '3d_cascade_lowres';
+
 export interface TrainingConfig {
   modelName: string;
   imagesPath?: string;
   labelsPath?: string;
-  foldIndex?: number;
+  configuration: ConfigurationType;
 }
 
 export interface ModelStatus {

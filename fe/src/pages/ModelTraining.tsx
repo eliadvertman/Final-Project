@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTrainModel } from '../hooks';
-import type { TrainingConfig } from '../types';
+import type { TrainingConfig, ConfigurationType } from '../types';
 
 interface NotificationState {
   type: 'success' | 'error' | 'warning' | null;
@@ -8,12 +8,14 @@ interface NotificationState {
   details?: string;
 }
 
+const CONFIGURATION_OPTIONS: ConfigurationType[] = ['2d', '3d_fullres', '3d_lowres', '3d_cascade_lowres'];
+
 const ModelTraining: React.FC = () => {
   const [formData, setFormData] = useState<TrainingConfig>({
     modelName: '',
     imagesPath: '',
     labelsPath: '',
-    foldIndex: undefined,
+    configuration: '3d_fullres',
   });
 
   const [notification, setNotification] = useState<NotificationState>({
@@ -33,22 +35,12 @@ const ModelTraining: React.FC = () => {
     }
   }, [notification]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
-    let processedValue: string | number | undefined = value;
-
-    // Handle number inputs
-    if (type === 'number') {
-      if (value === '') {
-        processedValue = undefined;
-      } else {
-        processedValue = parseInt(value, 10);
-      }
-    }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
 
     setFormData(prev => ({
       ...prev,
-      [name]: processedValue
+      [name]: value
     }));
     // Clear any existing notifications when user starts typing
     if (notification.type) {
@@ -82,7 +74,7 @@ const ModelTraining: React.FC = () => {
         modelName: '',
         imagesPath: '',
         labelsPath: '',
-        foldIndex: undefined,
+        configuration: '3d_fullres',
       });
     } catch (error: any) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to start training';
@@ -218,23 +210,32 @@ const ModelTraining: React.FC = () => {
 
         <div style={{ marginBottom: '16px' }}>
           <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-            Fold Index
+            Configuration *
           </label>
-          <input
-            type="number"
-            name="foldIndex"
-            value={formData.foldIndex || ''}
+          <select
+            name="configuration"
+            value={formData.configuration}
             onChange={handleInputChange}
+            required
             style={{
               width: '100%',
               padding: '8px',
               border: '1px solid #ddd',
               borderRadius: '4px',
-              fontSize: '14px'
+              fontSize: '14px',
+              backgroundColor: 'white',
+              cursor: 'pointer'
             }}
-            placeholder="Enter fold index for cross-validation"
-            min="0"
-          />
+          >
+            {CONFIGURATION_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+            Select the nnUNet configuration type for training
+          </div>
         </div>
 
 

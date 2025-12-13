@@ -66,6 +66,7 @@ class InferenceBL:
 
             # Prepare variables for sbatch template
             prediction_variables = PredictionTemplateVariables(
+                input_path = inference_input.input_path,
                 model_name=model_record.model_name,
                 model_path=model_record.training_id.model_path,
                 output_path=output_dir,

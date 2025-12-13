@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/c/Users/Eliad/Documents/Final Project/Final Project/project/Final-Project/serving/stroke_seg/controller/**)",
+      "Bash(npm run dev:*)",
+      "mcp__playwright__browser_click",
+      "Read(//mnt/c/Users/Eliad/Documents/Final Project/Final Project/project/Final-Project/serving/**)",
+      "Bash(python3:*)",
+      "Bash(curl:*)",
+      "Bash(source:*)",
+      "mcp__playwright__browser_navigate"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

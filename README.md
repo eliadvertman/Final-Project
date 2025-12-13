@@ -284,7 +284,7 @@ singularity build --notest postgres-lean.sif postgres-lean.def
 ```
 2. run singularity container 
 ```bash
-singularity run --writable-tmpfs --bind /home/veeliad/work/service/Final-Project/postgres_data/:/var/lib/postgresql/data postgres-lean.sif
+ singularity run --writable-tmpfs --bind /home/veeliad/work/BrainSegmentation/services/postgres_data/:/var/lib/postgresql/data postgres-lean.sif
 ```
 3. create db and tables (this needs to run only on the 1st time)
 ```bash

@@ -55,7 +55,7 @@ class TrainingBL:
             training_variables = TrainingTemplateVariables(
                 model_name=training_conf.model_name,
                 model_path=model_path,
-                fold_index=training_conf.fold_index
+                configuration=training_conf.configuration
             )
             
             # Submit job to Singularity via sbatch
@@ -64,7 +64,6 @@ class TrainingBL:
             # Create job record first
             job_record = JobRecord(
                 sbatch_id=sbatch_job_id,
-                fold_index=training_conf.fold_index,
                 job_type='TRAINING',
                 status='PENDING',
                 sbatch_content=sbatch_content
@@ -77,6 +76,7 @@ class TrainingBL:
                 images_path=training_conf.images_path,
                 labels_path=training_conf.labels_path,
                 model_path=model_path,
+                configuration=training_conf.configuration,
                 job_id=job_record,
                 status='TRAINING',
                 progress=0.0,
