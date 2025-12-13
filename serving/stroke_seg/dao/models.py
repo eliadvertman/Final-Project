@@ -10,7 +10,7 @@ class JobRecord(BaseModel):
     """ORM model for the jobs table."""
     id = CharField(primary_key=True, max_length=36, default=lambda: str(uuid.uuid4()))
     sbatch_id = CharField(max_length=255, null=False)
-    job_type = CharField(max_length=20, null=False, constraints=[Check("job_type IN ('INFERENCE', 'TRAINING')")])
+    job_type = CharField(max_length=20, null=False, constraints=[Check("job_type IN ('INFERENCE', 'TRAINING', 'EVALUATION')")])
     status = CharField(max_length=20, null=False, constraints=[Check("status IN ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED')")])
     start_time = DateTimeField(null=True)
     end_time = DateTimeField(null=True)
@@ -67,3 +67,21 @@ class InferenceRecord(BaseModel):
     
     class Meta:
         table_name = 'inference'
+
+
+class EvaluationRecord(BaseModel):
+    """ORM model for the evaluation table."""
+    id = CharField(primary_key=True, max_length=36, default=lambda: str(uuid.uuid4()))
+    model_id = ForeignKeyField(ModelRecord, field='id', backref='evaluations', null=False)
+    job_id = ForeignKeyField(JobRecord, field='id', backref='evaluation', null=False)
+    evaluation_path = CharField(max_length=500, null=False)
+    configurations = BinaryJSONField(null=False)
+    status = CharField(max_length=20, null=False, constraints=[Check("status IN ('PENDING', 'EVALUATING', 'COMPLETED', 'FAILED')")])
+    results = BinaryJSONField(null=True)
+    start_time = DateTimeField(null=True)
+    end_time = DateTimeField(null=True)
+    error_message = TextField(null=True)
+    created_at = DateTimeField(default=datetime.now)
+    
+    class Meta:
+        table_name = 'evaluation'

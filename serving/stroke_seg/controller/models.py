@@ -1,7 +1,7 @@
 """Pydantic models for API request and response validation."""
 
 from pydantic import BaseModel, Field
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 
 
 ConfigurationType = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_lowres"]
@@ -19,3 +19,11 @@ class InferenceInput(BaseModel):
     model_id: str = Field(None, alias="modelId")
     input_path: str = Field(None, alias="inputPath")
     fold_index: int = Field(None, alias="foldIndex", description="Fold index for cross-validation")
+
+
+class EvaluationConfig(BaseModel):
+    """Request model for evaluation configuration."""
+
+    model_name: str = Field(..., alias="modelName", description="Name of the model to evaluate")
+    evaluation_path: str = Field(..., alias="evaluationPath", description="Path to the evaluation/validation dataset")
+    configurations: List[ConfigurationType] = Field(..., description="List of nnUNet configurations to evaluate")

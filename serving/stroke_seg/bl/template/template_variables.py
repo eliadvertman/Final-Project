@@ -1,7 +1,7 @@
 """Template variables dataclass for sbatch template interpolation."""
 import time
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict, Any, List
 from stroke_seg.config import task_number
 
 
@@ -79,4 +79,50 @@ class PredictionTemplateVariables:
             'output_path': self.output_path,
             'fold_index': self.fold_index,
             'timestamp': self.timestamp
+        }
+
+
+@dataclass
+class EvaluationTemplateVariables:
+    """Variables required for evaluation sbatch template interpolation."""
+
+    model_name: str
+    model_path: str
+    evaluation_path: str
+    configurations: List[str]
+    output_path: str
+    timestamp: float = time.time()
+
+    def __post_init__(self):
+        """Validate the template variables after initialization."""
+        if not self.model_name or not isinstance(self.model_name, str):
+            raise ValueError("model_name must be a non-empty string")
+        if not self.model_path or not isinstance(self.model_path, str):
+            raise ValueError("model_path must be a non-empty string")
+        if not self.evaluation_path or not isinstance(self.evaluation_path, str):
+            raise ValueError("evaluation_path must be a non-empty string")
+        if not self.configurations or not isinstance(self.configurations, list):
+            raise ValueError("configurations must be a non-empty list")
+        valid_configurations = ["2d", "3d_fullres", "3d_lowres", "3d_cascade_lowres"]
+        for config in self.configurations:
+            if config not in valid_configurations:
+                raise ValueError(f"Each configuration must be one of: {valid_configurations}")
+        if not self.output_path or not isinstance(self.output_path, str):
+            raise ValueError("output_path must be a non-empty string")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """
+        Convert dataclass to dictionary for template formatting.
+
+        Returns:
+            Dictionary representation of template variables
+        """
+        return {
+            'model_name': self.model_name,
+            'model_path': self.model_path,
+            'evaluation_path': self.evaluation_path,
+            'configurations': ','.join(self.configurations),
+            'output_path': self.output_path,
+            'timestamp': self.timestamp,
+            'task_number': task_number
         }

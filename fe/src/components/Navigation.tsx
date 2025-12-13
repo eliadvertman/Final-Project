@@ -9,6 +9,7 @@ const Navigation: React.FC = () => {
     { path: '/train', label: 'Train Model', icon: '🎯' },
     { path: '/models', label: 'Models', icon: '🤖' },
     { path: '/predict', label: 'Make Prediction', icon: '🔮' },
+    { path: '/evaluate', label: 'Evaluate Model', icon: '📈' },
     { path: '/history', label: 'Prediction History', icon: '📋' },
   ];
 

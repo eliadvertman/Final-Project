@@ -6,12 +6,13 @@ from typing import Optional, Dict, Any
 from stroke_seg.bl.client.slurm.slurm_client import SlurmClient
 from stroke_seg.bl.poller.prediction_job_monitor import PredictionJobMonitor
 from stroke_seg.bl.poller.training_job_monitor import TrainingJobMonitor
+from stroke_seg.bl.poller.evaluation_job_monitor import EvaluationJobMonitor
 from stroke_seg.dao.job_dao import JobDAO
 from stroke_seg.logging_config import get_logger
 
 
 class JobMonitorManager:
-    """Manager that orchestrates both training and prediction job monitors."""
+    """Manager that orchestrates training, prediction, and evaluation job monitors."""
 
     def __init__(
         self,
@@ -29,14 +30,15 @@ class JobMonitorManager:
         """
         self.logger = get_logger(__name__)
 
-        # Initialize both monitors with shared dependencies
+        # Initialize all monitors with shared dependencies
         self.training_monitor = TrainingJobMonitor(job_dao, slurm_client, poll_interval)
         self.prediction_monitor = PredictionJobMonitor(job_dao, slurm_client, poll_interval)
+        self.evaluation_monitor = EvaluationJobMonitor(job_dao, slurm_client, poll_interval)
 
         self._running = False
 
     async def start(self) -> None:
-        """Start both monitoring services."""
+        """Start all monitoring services."""
         if self._running:
             self.logger.warning("JobMonitorManager is already running")
             return
@@ -44,14 +46,15 @@ class JobMonitorManager:
         self.logger.info("Starting JobMonitorManager...")
 
         try:
-            # Start both monitors concurrently
+            # Start all monitors concurrently
             await asyncio.gather(
                 self.training_monitor.start(),
-                self.prediction_monitor.start()
+                self.prediction_monitor.start(),
+                self.evaluation_monitor.start()
             )
 
             self._running = True
-            self.logger.info("JobMonitorManager started successfully - both monitors running")
+            self.logger.info("JobMonitorManager started successfully - all monitors running")
 
         except Exception as e:
             self.logger.error(f"Failed to start JobMonitorManager: {str(e)}", exc_info=True)
@@ -71,7 +74,7 @@ class JobMonitorManager:
         self.logger.info("JobMonitorManager stopped successfully")
 
     async def _stop_monitors(self) -> None:
-        """Stop both monitors, handling any exceptions."""
+        """Stop all monitors, handling any exceptions."""
         stop_tasks = []
 
         if self.training_monitor.is_running:
@@ -79,6 +82,9 @@ class JobMonitorManager:
 
         if self.prediction_monitor.is_running:
             stop_tasks.append(self.prediction_monitor.stop())
+
+        if self.evaluation_monitor.is_running:
+            stop_tasks.append(self.evaluation_monitor.stop())
 
         if stop_tasks:
             try:
@@ -89,7 +95,11 @@ class JobMonitorManager:
     @property
     def is_running(self) -> bool:
         """Check if manager is currently running."""
-        return self._running and (self.training_monitor.is_running or self.prediction_monitor.is_running)
+        return self._running and (
+            self.training_monitor.is_running or 
+            self.prediction_monitor.is_running or 
+            self.evaluation_monitor.is_running
+        )
 
     async def poll_job_once(self, job_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -109,14 +119,20 @@ class JobMonitorManager:
 
         # Try prediction monitor if not found in training
         result = await self.prediction_monitor.poll_job_once(job_id)
+        if result:
+            return result
+
+        # Try evaluation monitor if not found in prediction
+        result = await self.evaluation_monitor.poll_job_once(job_id)
         return result
 
     def get_status(self) -> Dict[str, Any]:
-        """Get comprehensive status information for both monitors."""
+        """Get comprehensive status information for all monitors."""
         return {
             'manager_running': self.is_running,
             'training_monitor': self.training_monitor.get_status(),
-            'prediction_monitor': self.prediction_monitor.get_status()
+            'prediction_monitor': self.prediction_monitor.get_status(),
+            'evaluation_monitor': self.evaluation_monitor.get_status()
         }
 
     def get_training_monitor(self) -> TrainingJobMonitor:
@@ -126,3 +142,7 @@ class JobMonitorManager:
     def get_prediction_monitor(self) -> PredictionJobMonitor:
         """Get the prediction monitor instance for direct access if needed."""
         return self.prediction_monitor
+
+    def get_evaluation_monitor(self) -> EvaluationJobMonitor:
+        """Get the evaluation monitor instance for direct access if needed."""
+        return self.evaluation_monitor

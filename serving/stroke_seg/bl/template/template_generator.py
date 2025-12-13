@@ -6,7 +6,7 @@ from pathlib import Path
 
 from stroke_seg.logging_config import get_logger
 from stroke_seg.exceptions import ModelCreationException
-from .template_variables import TrainingTemplateVariables, PredictionTemplateVariables
+from .template_variables import TrainingTemplateVariables, PredictionTemplateVariables, EvaluationTemplateVariables
 
 
 class TemplateGenerator:
@@ -166,5 +166,48 @@ class TemplateGenerator:
             raise ModelCreationException(error_msg)
         except Exception as e:
             error_msg = f"Inference template generation failed: {str(e)}"
+            self.logger.error(error_msg)
+            raise ModelCreationException(error_msg)
+
+    def generate_evaluation_sbatch_content(self, variables: EvaluationTemplateVariables) -> str:
+        """
+        Generate sbatch content for evaluation by interpolating variables into loaded template.
+
+        Args:
+            variables: Evaluation template variables dataclass
+
+        Returns:
+            Interpolated sbatch content for evaluation
+
+        Raises:
+            ModelCreationException: If template generation fails
+        """
+        variables_dict = variables.to_dict()
+        self.logger.debug(f"Generating evaluation sbatch content with variables: {list(variables_dict.keys())}")
+
+        try:
+            # Find all placeholders in template
+            placeholders = re.findall(r'\{([^}]+)\}', self.template_content)
+
+            # Check if all required variables are provided
+            missing_vars = [var for var in placeholders if var not in variables_dict]
+            if missing_vars:
+                error_msg = f"Missing template variables: {missing_vars}"
+                self.logger.error(error_msg)
+                raise ModelCreationException(error_msg)
+
+            # Interpolate variables
+            sbatch_content = self.template_content.format(**variables_dict)
+
+            self.logger.info("Evaluation sbatch content generated successfully")
+            self.logger.debug(f"Evaluation sbatch content is {sbatch_content}")
+            return sbatch_content
+
+        except KeyError as e:
+            error_msg = f"Template variable not found: {str(e)}"
+            self.logger.error(error_msg)
+            raise ModelCreationException(error_msg)
+        except Exception as e:
+            error_msg = f"Evaluation template generation failed: {str(e)}"
             self.logger.error(error_msg)
             raise ModelCreationException(error_msg)

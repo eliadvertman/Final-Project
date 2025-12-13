@@ -5,6 +5,7 @@ from flask_cors import CORS
 
 from stroke_seg.controller import model_bp, prediction_bp
 from stroke_seg.controller.training_controller import training_bp
+from stroke_seg.controller.evaluation_controller import evaluation_bp
 from stroke_seg.dao.database import get_pool_status, verify_connection, database
 from stroke_seg.config import validate_template_files
 from stroke_seg.logging_config import setup_logging, get_logger, add_request_id_to_request, log_request_info
@@ -49,6 +50,7 @@ except Exception as e:
 app.register_blueprint(training_bp)
 app.register_blueprint(model_bp)
 app.register_blueprint(prediction_bp)
+app.register_blueprint(evaluation_bp)
 
 
 # Request logging middleware

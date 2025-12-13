@@ -3,3 +3,4 @@ export { default as ModelTraining } from './ModelTraining';
 export { default as Models } from './Models';
 export { default as Prediction } from './Prediction';
 export { default as PredictionHistory } from './PredictionHistory';
+export { default as Evaluation } from './Evaluation';

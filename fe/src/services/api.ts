@@ -10,6 +10,10 @@ import type {
   PredictionSummary,
   TrainingResponse,
   TrainingSummary,
+  EvaluationRequest,
+  EvaluationResponse,
+  EvaluationStatus,
+  EvaluationSummary,
 } from '../types';
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
@@ -100,11 +104,34 @@ export const predictionApi = {
   },
 };
 
+export const evaluationApi = {
+  // Run an evaluation
+  runEvaluation: async (request: EvaluationRequest): Promise<EvaluationResponse> => {
+    const response: AxiosResponse<EvaluationResponse> = await apiClient.post('/evaluation/evaluate', request);
+    return response.data;
+  },
+
+  // Get evaluation status
+  getEvaluationStatus: async (evaluationId: string): Promise<EvaluationStatus> => {
+    const response: AxiosResponse<EvaluationStatus> = await apiClient.get(`/evaluation/${evaluationId}/status`);
+    return response.data;
+  },
+
+  // List all evaluations
+  listEvaluations: async (limit = 10, offset = 0): Promise<EvaluationSummary[]> => {
+    const response: AxiosResponse<EvaluationSummary[]> = await apiClient.get('/evaluation/list', {
+      params: { limit, offset }
+    });
+    return response.data;
+  },
+};
+
 // Combined API object for easier imports
 export const api = {
   models: modelApi,
   training: trainingApi,
   predictions: predictionApi,
+  evaluations: evaluationApi,
 };
 
 export default api;

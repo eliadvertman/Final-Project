@@ -10,6 +10,7 @@ task_number = 130
 _template_dir = Path(__file__).parent / "templates"
 training_template_path = str(_template_dir / "sbatch_train_template")
 inference_template_path = str(_template_dir / "sbatch_inference_template")
+evaluation_template_path = str(_template_dir / "sbatch_evaluation_template")
 
 def validate_template_files():
     """
@@ -20,7 +21,8 @@ def validate_template_files():
     """
     templates = {
         "Training template": training_template_path,
-        "Inference template": inference_template_path
+        "Inference template": inference_template_path,
+        "Evaluation template": evaluation_template_path
     }
 
     missing_templates = []

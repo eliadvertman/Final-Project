@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components';
-import { Dashboard, ModelTraining, Models, Prediction, PredictionHistory } from './pages';
+import { Dashboard, ModelTraining, Models, Prediction, PredictionHistory, Evaluation } from './pages';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -23,6 +23,7 @@ function App() {
             <Route path="/train" element={<ModelTraining />} />
             <Route path="/models" element={<Models />} />
             <Route path="/predict" element={<Prediction />} />
+            <Route path="/evaluate" element={<Evaluation />} />
             <Route path="/history" element={<PredictionHistory />} />
           </Routes>
         </Layout>
