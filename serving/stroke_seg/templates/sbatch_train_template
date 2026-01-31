@@ -15,6 +15,10 @@
 
 
 ## run time
-singularity run --fakeroot --overlay TEST/overlay --nv --env device=cuda --env configuration={configuration} --env task_number={task_number} --pwd /stroke_segmentation --mount type=bind,source={model_path},destination=/stroke_segmentation/nnunet_results training_big_lesions.sif
-
-
+singularity run --fakeroot --writable-tmpfs --nv \
+  --env device=cuda \
+  --env configuration={configuration} \
+  --env task_number={task_number} \
+  --pwd /stroke_segmentation \
+  --bind {model_path}:/stroke_segmentation/nnunet_results \
+  training_latest.sif
